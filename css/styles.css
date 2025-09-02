@@ -6,15 +6,15 @@
 }
 
 :root {
-    /* Dark Navy Color Palette with Carbon Fiber Accents */
-    --primary-dark: #0a0e13;
-    --secondary-dark: #141b26;
-    --tertiary-dark: #1e2a3a;
-    --accent-dark: #2a3d52;
-    --carbon-dark: #0d1117;
-    --carbon-light: #1c2128;
-    --shine-color: rgba(255, 255, 255, 0.1);
-    --shine-bright: rgba(255, 255, 255, 0.2);
+    /* Dark Photography Theme */
+    --primary-dark: #0f0f0f;
+    --secondary-dark: #1a1a1a;
+    --tertiary-dark: #252525;
+    --accent-dark: #333333;
+    --subtle-gray: #1e1e1e;
+    --warm-gray: #2a2a2a;
+    --highlight-color: rgba(255, 255, 255, 0.05);
+    --accent-highlight: rgba(255, 255, 255, 0.1);
     --text-primary: #f0f6fc;
     --text-secondary: #b1bac4;
     --text-muted: #6e7681;
@@ -60,11 +60,9 @@ body {
     font-family: 'Inter', sans-serif;
     background: var(--primary-dark);
     background-image: 
-        radial-gradient(circle at 25% 25%, var(--carbon-light) 0%, transparent 50%),
-        radial-gradient(circle at 75% 75%, var(--carbon-light) 0%, transparent 50%),
-        linear-gradient(45deg, transparent 49%, rgba(255,255,255,0.02) 50%, transparent 51%),
-        linear-gradient(-45deg, transparent 49%, rgba(255,255,255,0.02) 50%, transparent 51%);
-    background-size: 60px 60px, 60px 60px, 4px 4px, 4px 4px;
+        radial-gradient(ellipse at top, var(--subtle-gray) 0%, var(--primary-dark) 50%),
+        radial-gradient(ellipse at bottom, var(--warm-gray) 0%, var(--primary-dark) 50%);
+    background-size: 100% 100%;
     color: var(--text-primary);
     line-height: 1.6;
     overflow-x: hidden;
@@ -81,14 +79,10 @@ body {
     position: fixed;
     top: 0;
     width: 100%;
-    background: linear-gradient(135deg, var(--carbon-dark) 0%, var(--secondary-dark) 50%, var(--carbon-dark) 100%);
-    background-image: 
-        radial-gradient(circle at 20% 20%, var(--carbon-light) 0%, transparent 40%),
-        linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.03) 50%, transparent 52%);
-    background-size: 40px 40px, 2px 2px;
+    background: rgba(15, 15, 15, 0.95);
     backdrop-filter: blur(15px);
-    border-bottom: 1px solid var(--border-shine);
-    box-shadow: 0 1px 0 0 var(--shine-color), inset 0 1px 0 0 var(--shine-color);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
     z-index: 1000;
     transition: all 0.3s ease;
 }
@@ -163,13 +157,11 @@ body {
 /* Hero Section */
 .hero {
     height: 100vh;
-    background: linear-gradient(135deg, var(--carbon-dark) 0%, var(--primary-dark) 25%, var(--secondary-dark) 75%, var(--carbon-dark) 100%);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 40%, var(--primary-dark) 100%);
     background-image: 
-        radial-gradient(circle at 70% 30%, var(--carbon-light) 0%, transparent 60%),
-        radial-gradient(circle at 30% 70%, var(--carbon-light) 0%, transparent 60%),
-        linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.02) 50%, transparent 52%),
-        linear-gradient(-45deg, transparent 48%, rgba(255,255,255,0.02) 50%, transparent 52%);
-    background-size: 80px 80px, 80px 80px, 3px 3px, 3px 3px;
+        radial-gradient(ellipse at 20% 80%, var(--highlight-color) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, var(--highlight-color) 0%, transparent 50%);
+    background-size: 100% 100%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -216,13 +208,9 @@ body {
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-sm);
-    background: linear-gradient(135deg, var(--tertiary-dark) 0%, var(--accent-dark) 50%, var(--tertiary-dark) 100%);
-    background-image: 
-        radial-gradient(circle at 30% 30%, var(--carbon-light) 0%, transparent 60%),
-        linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.05) 50%, transparent 52%);
-    background-size: 30px 30px, 2px 2px;
+    background: linear-gradient(135deg, var(--tertiary-dark) 0%, var(--accent-dark) 100%);
     color: var(--text-primary);
-    border: 1px solid var(--border-shine);
+    border: 1px solid var(--border-color);
     padding: var(--spacing-md) var(--spacing-xl);
     border-radius: var(--border-radius-lg);
     font-size: var(--font-size-base);
@@ -230,19 +218,13 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     text-decoration: none;
-    box-shadow: 
-        0 1px 0 0 var(--shine-color),
-        inset 0 1px 0 0 var(--shine-color),
-        0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .cta-button:hover {
-    background: linear-gradient(135deg, var(--accent-dark) 0%, var(--hover-color) 50%, var(--accent-dark) 100%);
+    background: linear-gradient(135deg, var(--accent-dark) 0%, var(--hover-color) 100%);
     transform: translateY(-3px);
-    box-shadow: 
-        0 2px 0 0 var(--shine-bright),
-        inset 0 1px 0 0 var(--shine-bright),
-        0 8px 16px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
 }
 
 /* Section Styles */
@@ -274,25 +256,15 @@ body {
     overflow: hidden;
     cursor: pointer;
     transition: all 0.3s ease;
-    background: linear-gradient(135deg, var(--carbon-dark) 0%, var(--tertiary-dark) 50%, var(--carbon-dark) 100%);
-    background-image: 
-        radial-gradient(circle at 40% 40%, var(--carbon-light) 0%, transparent 70%),
-        linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.03) 50%, transparent 52%);
-    background-size: 25px 25px, 2px 2px;
+    background: var(--tertiary-dark);
     border: 1px solid var(--border-color);
-    box-shadow: 
-        0 1px 0 0 var(--shine-color),
-        inset 0 1px 0 0 var(--shine-color),
-        0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .gallery-item:hover {
     transform: translateY(-8px) scale(1.02);
-    box-shadow: 
-        0 2px 0 0 var(--shine-bright),
-        inset 0 1px 0 0 var(--shine-bright),
-        0 12px 24px rgba(0, 0, 0, 0.4);
-    border-color: var(--border-shine);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+    border-color: var(--accent-dark);
 }
 
 .gallery-item img {
@@ -503,18 +475,11 @@ body {
 }
 
 .password-container {
-    background: linear-gradient(135deg, var(--carbon-dark) 0%, var(--secondary-dark) 50%, var(--carbon-dark) 100%);
-    background-image: 
-        radial-gradient(circle at 40% 40%, var(--carbon-light) 0%, transparent 70%),
-        linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.04) 50%, transparent 52%);
-    background-size: 30px 30px, 2px 2px;
+    background: linear-gradient(135deg, var(--secondary-dark) 0%, var(--tertiary-dark) 100%);
     padding: var(--spacing-3xl);
     border-radius: var(--border-radius-xl);
-    border: 1px solid var(--border-shine);
-    box-shadow: 
-        0 2px 0 0 var(--shine-color),
-        inset 0 1px 0 0 var(--shine-color),
-        0 8px 24px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     max-width: 400px;
     width: 90%;
     text-align: center;
@@ -613,22 +578,14 @@ body {
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    background: linear-gradient(135deg, var(--carbon-dark) 0%, var(--secondary-dark) 50%, var(--carbon-dark) 100%);
-    background-image: 
-        radial-gradient(circle at 60% 40%, var(--carbon-light) 0%, transparent 70%),
-        linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.03) 50%, transparent 52%);
-    background-size: 50px 50px, 3px 3px;
-    box-shadow: 
-        inset 0 1px 0 0 var(--shine-color),
-        0 2px 8px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, var(--secondary-dark) 0%, var(--tertiary-dark) 100%);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .upload-dropzone:hover {
-    border-color: var(--border-shine);
-    background: linear-gradient(135deg, var(--secondary-dark) 0%, var(--tertiary-dark) 50%, var(--secondary-dark) 100%);
-    box-shadow: 
-        inset 0 1px 0 0 var(--shine-bright),
-        0 4px 12px rgba(0, 0, 0, 0.3);
+    border-color: var(--accent-dark);
+    background: linear-gradient(135deg, var(--tertiary-dark) 0%, var(--accent-dark) 100%);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     transform: translateY(-2px);
 }
 
@@ -834,28 +791,17 @@ body {
     }
 }
 
-/* Carbon Fiber and Shine Utilities */
-.carbon-fiber-bg {
-    background: linear-gradient(135deg, var(--carbon-dark) 0%, var(--secondary-dark) 50%, var(--carbon-dark) 100%);
-    background-image: 
-        radial-gradient(circle at 50% 50%, var(--carbon-light) 0%, transparent 70%),
-        linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.03) 50%, transparent 52%),
-        linear-gradient(-45deg, transparent 48%, rgba(255,255,255,0.03) 50%, transparent 52%);
-    background-size: 40px 40px, 2px 2px, 2px 2px;
+/* Subtle Background Utilities */
+.subtle-bg {
+    background: linear-gradient(135deg, var(--secondary-dark) 0%, var(--tertiary-dark) 100%);
 }
 
-.shine-effect {
-    box-shadow: 
-        0 1px 0 0 var(--shine-color),
-        inset 0 1px 0 0 var(--shine-color),
-        0 4px 8px rgba(0, 0, 0, 0.3);
+.elegant-shadow {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-.shine-hover:hover {
-    box-shadow: 
-        0 2px 0 0 var(--shine-bright),
-        inset 0 1px 0 0 var(--shine-bright),
-        0 8px 16px rgba(0, 0, 0, 0.4);
+.elegant-hover:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     transform: translateY(-2px);
 }
 
@@ -952,25 +898,22 @@ input:focus,
 .admin-input {
     width: 100%;
     padding: var(--spacing-md);
-    background: linear-gradient(135deg, var(--carbon-dark) 0%, var(--tertiary-dark) 100%);
-    background-image: linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.02) 50%, transparent 52%);
-    background-size: 2px 2px;
+    background: var(--tertiary-dark);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
     color: var(--text-primary);
     font-size: var(--font-size-base);
     font-family: inherit;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 1px 0 0 var(--shine-color);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
     transition: all 0.3s ease;
     resize: vertical;
 }
 
 .admin-input:focus {
     outline: none;
-    border-color: var(--border-shine);
+    border-color: var(--accent-dark);
     box-shadow: 
-        inset 0 1px 3px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 0 var(--shine-bright),
+        inset 0 2px 4px rgba(0, 0, 0, 0.3),
         0 0 0 2px rgba(240, 246, 252, 0.1);
 }
 
@@ -978,32 +921,22 @@ input:focus,
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-sm);
-    background: linear-gradient(135deg, var(--tertiary-dark) 0%, var(--accent-dark) 50%, var(--tertiary-dark) 100%);
-    background-image: 
-        radial-gradient(circle at 30% 30%, var(--carbon-light) 0%, transparent 60%),
-        linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.05) 50%, transparent 52%);
-    background-size: 20px 20px, 2px 2px;
+    background: linear-gradient(135deg, var(--tertiary-dark) 0%, var(--accent-dark) 100%);
     color: var(--text-primary);
-    border: 1px solid var(--border-shine);
+    border: 1px solid var(--border-color);
     padding: var(--spacing-md) var(--spacing-lg);
     border-radius: var(--border-radius-md);
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: var(--font-size-base);
     font-weight: 500;
-    box-shadow: 
-        0 1px 0 0 var(--shine-color),
-        inset 0 1px 0 0 var(--shine-color),
-        0 3px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
 }
 
 .admin-btn:hover {
-    background: linear-gradient(135deg, var(--accent-dark) 0%, var(--hover-color) 50%, var(--accent-dark) 100%);
+    background: linear-gradient(135deg, var(--accent-dark) 0%, var(--hover-color) 100%);
     transform: translateY(-2px);
-    box-shadow: 
-        0 2px 0 0 var(--shine-bright),
-        inset 0 1px 0 0 var(--shine-bright),
-        0 6px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
 }
 
 .image-upload-area {
@@ -1022,8 +955,8 @@ input:focus,
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--carbon-dark);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+    background: var(--tertiary-dark);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .current-image img {
@@ -1100,7 +1033,7 @@ input:focus,
     margin: var(--spacing-xs);
     font-size: var(--font-size-sm);
     border: 1px solid var(--border-color);
-    box-shadow: inset 0 1px 0 0 var(--shine-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .tag-item .tag-remove {
@@ -1155,17 +1088,15 @@ input:focus,
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: var(--font-size-sm);
-    box-shadow: inset 0 1px 0 0 var(--shine-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .filter-btn:hover,
 .filter-btn.active {
     background: var(--accent-dark);
     color: var(--text-primary);
-    border-color: var(--border-shine);
-    box-shadow: 
-        inset 0 1px 0 0 var(--shine-bright),
-        0 2px 4px rgba(0, 0, 0, 0.2);
+    border-color: var(--accent-dark);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .gallery-item .item-tags {
