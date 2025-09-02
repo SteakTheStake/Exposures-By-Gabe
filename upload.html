@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload - Photography Portfolio</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-title">
+                <a href="index.html" style="text-decoration: none; color: inherit;">Portfolio</a>
+            </h1>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Back to Portfolio</a>
+                <button id="logoutBtn" class="nav-link logout-btn" onclick="logout()" style="display: none;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Password Protection Overlay -->
+    <div id="passwordOverlay" class="password-overlay">
+        <div class="password-container">
+            <div class="password-content">
+                <h2>Access Required</h2>
+                <p>Please enter the password to access the upload area</p>
+                <form id="passwordForm" onsubmit="return authenticateUser(event)">
+                    <div class="input-group">
+                        <input type="password" id="passwordInput" placeholder="Enter password" required>
+                        <button type="submit" class="auth-button">
+                            <i data-feather="unlock"></i>
+                            <span>Access</span>
+                        </button>
+                    </div>
+                    <div id="authError" class="auth-error"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Interface -->
+    <div id="uploadInterface" class="upload-interface">
+        <div class="container">
+            <h2 class="section-title">Upload Images</h2>
+            
+            <!-- Upload Area -->
+            <div class="upload-section">
+                <div class="upload-dropzone" id="uploadDropzone" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-content">
+                        <i data-feather="upload-cloud" class="upload-icon"></i>
+                        <h3>Drop images here or click to select</h3>
+                        <p>Supports JPG, PNG, WebP up to 10MB each</p>
+                    </div>
+                    <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                </div>
+                
+                <!-- Upload Progress -->
+                <div id="uploadProgress" class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p id="progressText">Uploading...</p>
+                </div>
+                
+                <!-- Upload Results -->
+                <div id="uploadResults" class="upload-results"></div>
+            </div>
+
+            <!-- Gallery Management -->
+            <div class="gallery-management">
+                <h3>Manage Gallery</h3>
+                <div class="management-grid" id="managementGrid">
+                    <!-- Uploaded images will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/upload.js"></script>
+</body>
+</html>
