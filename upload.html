@@ -58,6 +58,31 @@
                     <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
                 </div>
                 
+                <!-- Tag Input Section -->
+                <div class="tag-section carbon-fiber-bg shine-effect" id="tagSection" style="display: none;">
+                    <h4>Add Tags to Images</h4>
+                    <div class="tag-input-group">
+                        <input type="text" id="tagInput" placeholder="Enter tags (e.g., landscape, nature, sunset)" class="admin-input">
+                        <button type="button" onclick="addTag()" class="admin-btn">
+                            <i data-feather="plus"></i>
+                            Add Tag
+                        </button>
+                    </div>
+                    <div class="tag-list" id="currentTags">
+                        <p class="tag-help">Popular tags: landscape, portrait, nature, sunset, urban, wildlife, macro</p>
+                    </div>
+                    <div class="tag-actions">
+                        <button type="button" onclick="applyTagsToAll()" class="admin-btn">
+                            <i data-feather="tag"></i>
+                            Apply to All Images
+                        </button>
+                        <button type="button" onclick="clearAllTags()" class="admin-btn" style="background: var(--error-color);">
+                            <i data-feather="x"></i>
+                            Clear Tags
+                        </button>
+                    </div>
+                </div>
+                
                 <!-- Upload Progress -->
                 <div id="uploadProgress" class="upload-progress" style="display: none;">
                     <div class="progress-bar">

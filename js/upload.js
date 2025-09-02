@@ -1,6 +1,7 @@
 // Upload functionality and gallery management
 let uploadedImages = [];
 let currentUploadIndex = 0;
+let currentTags = [];
 
 // Initialize upload functionality
 function initializeUpload() {
@@ -97,6 +98,7 @@ function handleFiles(files) {
     });
     
     if (validFiles.length > 0) {
+        showTagSection();
         uploadFiles(validFiles);
     }
 }
@@ -171,7 +173,8 @@ function addImageToGallery(file) {
         url: URL.createObjectURL(file),
         uploadDate: new Date().toISOString(),
         size: file.size,
-        type: file.type
+        type: file.type,
+        tags: [...currentTags] // Add current tags to the image
     };
     
     uploadedImages.push(imageData);
@@ -252,17 +255,7 @@ function updateGalleryManagement() {
     uploadedImages.forEach((image, index) => {
         const managementItem = document.createElement('div');
         managementItem.className = 'management-item';
-        managementItem.innerHTML = `
-            <img src="${image.url}" alt="${AuthModule.SecurityUtils.escapeHtml(image.name)}" loading="lazy">
-            <div class="management-controls">
-                <button class="control-btn" onclick="previewImage('${image.id}')" title="Preview">
-                    <i data-feather="eye"></i>
-                </button>
-                <button class="control-btn delete" onclick="deleteImage('${image.id}')" title="Delete">
-                    <i data-feather="trash-2"></i>
-                </button>
-            </div>
-        `;
+        managementItem.innerHTML = createManagementItemWithTags(image, index);
         
         managementGrid.appendChild(managementItem);
     });
@@ -423,12 +416,181 @@ function deleteAllImages() {
     showUploadResult('All images deleted successfully', true);
 }
 
+// Tag Management Functions
+
+// Show tag section
+function showTagSection() {
+    const tagSection = document.getElementById('tagSection');
+    if (tagSection) {
+        tagSection.style.display = 'block';
+        tagSection.classList.add('fade-in');
+    }
+}
+
+// Hide tag section
+function hideTagSection() {
+    const tagSection = document.getElementById('tagSection');
+    if (tagSection) {
+        tagSection.style.display = 'none';
+    }
+}
+
+// Add tag to current tags list
+function addTag() {
+    const tagInput = document.getElementById('tagInput');
+    const tagValue = tagInput.value.trim().toLowerCase();
+    
+    if (!tagValue) {
+        showUploadError('Please enter a tag');
+        return;
+    }
+    
+    if (currentTags.includes(tagValue)) {
+        showUploadError('Tag already exists');
+        return;
+    }
+    
+    if (tagValue.length > 20) {
+        showUploadError('Tag too long. Maximum 20 characters.');
+        return;
+    }
+    
+    currentTags.push(tagValue);
+    updateTagDisplay();
+    tagInput.value = '';
+    tagInput.focus();
+}
+
+// Remove tag from current tags list
+function removeTag(tag) {
+    const index = currentTags.indexOf(tag);
+    if (index > -1) {
+        currentTags.splice(index, 1);
+        updateTagDisplay();
+    }
+}
+
+// Update tag display
+function updateTagDisplay() {
+    const tagList = document.getElementById('currentTags');
+    
+    if (currentTags.length === 0) {
+        tagList.innerHTML = '<p class="tag-help">Popular tags: landscape, portrait, nature, sunset, urban, wildlife, macro</p>';
+        return;
+    }
+    
+    const tagHtml = currentTags.map(tag => `
+        <span class="tag-item">
+            ${AuthModule.SecurityUtils.escapeHtml(tag)}
+            <button class="tag-remove" onclick="removeTag('${tag}')" title="Remove tag">
+                ×
+            </button>
+        </span>
+    `).join('');
+    
+    tagList.innerHTML = tagHtml;
+}
+
+// Apply current tags to all uploaded images
+function applyTagsToAll() {
+    if (currentTags.length === 0) {
+        showUploadError('No tags to apply. Add some tags first.');
+        return;
+    }
+    
+    if (uploadedImages.length === 0) {
+        showUploadError('No images to tag. Upload some images first.');
+        return;
+    }
+    
+    uploadedImages.forEach(image => {
+        // Merge current tags with existing tags (avoid duplicates)
+        const existingTags = image.tags || [];
+        const newTags = [...new Set([...existingTags, ...currentTags])];
+        image.tags = newTags;
+    });
+    
+    saveImagesToStorage();
+    updateGalleryManagement();
+    showUploadResult(`Applied ${currentTags.length} tags to ${uploadedImages.length} images`, true);
+}
+
+// Clear all current tags
+function clearAllTags() {
+    if (currentTags.length === 0) {
+        showUploadError('No tags to clear');
+        return;
+    }
+    
+    currentTags = [];
+    updateTagDisplay();
+    showUploadResult('All tags cleared', true);
+}
+
+// Handle tag input with Enter key
+document.addEventListener('DOMContentLoaded', function() {
+    const tagInput = document.getElementById('tagInput');
+    if (tagInput) {
+        tagInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addTag();
+            }
+        });
+    }
+});
+
+// Update management item to show tags
+function createManagementItemWithTags(image, index) {
+    const tagsHtml = image.tags && image.tags.length > 0 
+        ? `<div class="item-tags">${image.tags.map(tag => `<span class="tag-badge">${AuthModule.SecurityUtils.escapeHtml(tag)}</span>`).join('')}</div>`
+        : '';
+    
+    return `
+        ${tagsHtml}
+        <img src="${image.url}" alt="${AuthModule.SecurityUtils.escapeHtml(image.name)}" loading="lazy">
+        <div class="management-controls">
+            <button class="control-btn" onclick="previewImage('${image.id}')" title="Preview">
+                <i data-feather="eye"></i>
+            </button>
+            <button class="control-btn" onclick="editImageTags('${image.id}')" title="Edit Tags">
+                <i data-feather="tag"></i>
+            </button>
+            <button class="control-btn delete" onclick="deleteImage('${image.id}')" title="Delete">
+                <i data-feather="trash-2"></i>
+            </button>
+        </div>
+    `;
+}
+
+// Edit tags for specific image
+function editImageTags(imageId) {
+    const image = uploadedImages.find(img => img.id === imageId);
+    if (!image) return;
+    
+    const currentImageTags = image.tags || [];
+    const newTags = prompt(`Edit tags for ${image.name}:\n(Separate tags with commas)`, currentImageTags.join(', '));
+    
+    if (newTags === null) return; // User cancelled
+    
+    const tagArray = newTags.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag.length > 0);
+    image.tags = [...new Set(tagArray)]; // Remove duplicates
+    
+    saveImagesToStorage();
+    updateGalleryManagement();
+    showUploadResult(`Tags updated for ${image.name}`, true);
+}
+
 // Export functionality for debugging
 window.UploadModule = {
     uploadedImages,
+    currentTags,
     clearUploadSession,
     deleteAllImages,
-    updateGalleryManagement
+    updateGalleryManagement,
+    addTag,
+    removeTag,
+    applyTagsToAll
 };
 
 // Initialize upload when auth is ready

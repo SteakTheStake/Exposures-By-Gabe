@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Photography Portfolio</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-title">
+                <a href="index.html" style="text-decoration: none; color: inherit;">Portfolio Admin</a>
+            </h1>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Main Site</a>
+                <a href="upload.html" class="nav-link">Upload Images</a>
+                <button id="logoutBtn" class="nav-link logout-btn" onclick="logout()" style="display: none;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Password Protection Overlay -->
+    <div id="passwordOverlay" class="password-overlay">
+        <div class="password-container">
+            <div class="password-content">
+                <h2>Admin Access Required</h2>
+                <p>Please enter the admin password to manage site content</p>
+                <form id="passwordForm" onsubmit="return authenticateAdmin(event)">
+                    <div class="input-group">
+                        <input type="password" id="passwordInput" placeholder="Enter admin password" required>
+                        <button type="submit" class="auth-button">
+                            <i data-feather="shield"></i>
+                            <span>Access</span>
+                        </button>
+                    </div>
+                    <div id="authError" class="auth-error"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Interface -->
+    <div id="adminInterface" class="upload-interface">
+        <div class="container">
+            <h2 class="section-title">Site Content Management</h2>
+            
+            <!-- Content Editing Section -->
+            <div class="admin-section">
+                <h3>Site Text Content</h3>
+                <div class="admin-grid">
+                    <div class="admin-card carbon-fiber-bg shine-effect">
+                        <h4>Hero Section</h4>
+                        <div class="form-group">
+                            <label for="heroTitle">Main Title</label>
+                            <input type="text" id="heroTitle" placeholder="Capturing Moments" class="admin-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="heroSubtitle">Subtitle</label>
+                            <textarea id="heroSubtitle" rows="3" placeholder="A curated collection of photography..." class="admin-input"></textarea>
+                        </div>
+                        <button onclick="updateHeroContent()" class="admin-btn">Update Hero</button>
+                    </div>
+                    
+                    <div class="admin-card carbon-fiber-bg shine-effect">
+                        <h4>About Section</h4>
+                        <div class="form-group">
+                            <label for="aboutText1">About Paragraph 1</label>
+                            <textarea id="aboutText1" rows="4" placeholder="Welcome to my photography portfolio..." class="admin-input"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="aboutText2">About Paragraph 2</label>
+                            <textarea id="aboutText2" rows="4" placeholder="My work focuses on..." class="admin-input"></textarea>
+                        </div>
+                        <button onclick="updateAboutContent()" class="admin-btn">Update About</button>
+                    </div>
+                    
+                    <div class="admin-card carbon-fiber-bg shine-effect">
+                        <h4>Contact Information</h4>
+                        <div class="form-group">
+                            <label for="contactEmail">Email</label>
+                            <input type="email" id="contactEmail" placeholder="hello@photographer.com" class="admin-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="contactInstagram">Instagram Handle</label>
+                            <input type="text" id="contactInstagram" placeholder="@photographer" class="admin-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="contactStatus">Availability Status</label>
+                            <input type="text" id="contactStatus" placeholder="Available for commissions" class="admin-input">
+                        </div>
+                        <button onclick="updateContactContent()" class="admin-btn">Update Contact</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Management Section -->
+            <div class="admin-section">
+                <h3>Site Images</h3>
+                <div class="admin-grid">
+                    <div class="admin-card carbon-fiber-bg shine-effect">
+                        <h4>Site Logo</h4>
+                        <div class="image-upload-area">
+                            <div class="current-image" id="currentLogo">
+                                <div class="placeholder-image">
+                                    <i data-feather="image"></i>
+                                    <p>Current Logo</p>
+                                </div>
+                            </div>
+                            <div class="upload-controls">
+                                <input type="file" id="logoInput" accept="image/*" style="display: none;" onchange="handleLogoUpload(event)">
+                                <button onclick="document.getElementById('logoInput').click()" class="admin-btn">
+                                    <i data-feather="upload"></i>
+                                    Upload Logo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-card carbon-fiber-bg shine-effect">
+                        <h4>Portrait Image</h4>
+                        <div class="image-upload-area">
+                            <div class="current-image" id="currentPortrait">
+                                <div class="placeholder-image">
+                                    <i data-feather="user"></i>
+                                    <p>Current Portrait</p>
+                                </div>
+                            </div>
+                            <div class="upload-controls">
+                                <input type="file" id="portraitInput" accept="image/*" style="display: none;" onchange="handlePortraitUpload(event)">
+                                <button onclick="document.getElementById('portraitInput').click()" class="admin-btn">
+                                    <i data-feather="upload"></i>
+                                    Upload Portrait
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results and Status -->
+            <div id="adminResults" class="upload-results"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

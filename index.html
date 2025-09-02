@@ -43,9 +43,25 @@
     <section id="gallery" class="gallery-section">
         <div class="container">
             <h2 class="section-title">Gallery</h2>
+            
+            <!-- Gallery Filters -->
+            <div class="gallery-filters carbon-fiber-bg shine-effect">
+                <h3>Filter by Category</h3>
+                <div class="filter-buttons" id="filterButtons">
+                    <button class="filter-btn active" onclick="filterGallery('all')">All</button>
+                    <button class="filter-btn" onclick="filterGallery('landscape')">Landscape</button>
+                    <button class="filter-btn" onclick="filterGallery('nature')">Nature</button>
+                    <button class="filter-btn" onclick="filterGallery('seascape')">Seascape</button>
+                </div>
+            </div>
+            
             <div class="gallery-grid" id="galleryGrid">
                 <!-- Gallery items will be populated by JavaScript -->
-                <div class="gallery-item" onclick="openModal(this)">
+                <div class="gallery-item" onclick="openModal(this)" data-tags="landscape,mountain">
+                    <div class="item-tags">
+                        <span class="tag-badge">landscape</span>
+                        <span class="tag-badge">mountain</span>
+                    </div>
                     <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop" alt="Landscape Photography" loading="lazy">
                     <div class="gallery-overlay">
                         <div class="gallery-info">
@@ -54,7 +70,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="gallery-item" onclick="openModal(this)">
+                <div class="gallery-item" onclick="openModal(this)" data-tags="nature,forest">
+                    <div class="item-tags">
+                        <span class="tag-badge">nature</span>
+                        <span class="tag-badge">forest</span>
+                    </div>
                     <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop" alt="Nature Photography" loading="lazy">
                     <div class="gallery-overlay">
                         <div class="gallery-info">
@@ -63,7 +83,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="gallery-item" onclick="openModal(this)">
+                <div class="gallery-item" onclick="openModal(this)" data-tags="seascape,ocean">
+                    <div class="item-tags">
+                        <span class="tag-badge">seascape</span>
+                        <span class="tag-badge">ocean</span>
+                    </div>
                     <img src="https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?w=800&h=600&fit=crop" alt="Seascape Photography" loading="lazy">
                     <div class="gallery-overlay">
                         <div class="gallery-info">
@@ -72,7 +96,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="gallery-item" onclick="openModal(this)">
+                <div class="gallery-item" onclick="openModal(this)" data-tags="nature,forest,mist">
+                    <div class="item-tags">
+                        <span class="tag-badge">nature</span>
+                        <span class="tag-badge">forest</span>
+                        <span class="tag-badge">mist</span>
+                    </div>
                     <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop" alt="Forest Photography" loading="lazy">
                     <div class="gallery-overlay">
                         <div class="gallery-info">
@@ -81,7 +110,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="gallery-item" onclick="openModal(this)">
+                <div class="gallery-item" onclick="openModal(this)" data-tags="landscape,mountain,rock">
+                    <div class="item-tags">
+                        <span class="tag-badge">landscape</span>
+                        <span class="tag-badge">mountain</span>
+                        <span class="tag-badge">rock</span>
+                    </div>
                     <img src="https://images.unsplash.com/photo-1464822759844-d150baec843a?w=800&h=600&fit=crop" alt="Mountain Photography" loading="lazy">
                     <div class="gallery-overlay">
                         <div class="gallery-info">
@@ -90,7 +124,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="gallery-item" onclick="openModal(this)">
+                <div class="gallery-item" onclick="openModal(this)" data-tags="landscape,sunset,golden">
+                    <div class="item-tags">
+                        <span class="tag-badge">landscape</span>
+                        <span class="tag-badge">sunset</span>
+                        <span class="tag-badge">golden</span>
+                    </div>
                     <img src="https://images.unsplash.com/photo-1501436513145-30f24e19fcc4?w=800&h=600&fit=crop" alt="Sunset Photography" loading="lazy">
                     <div class="gallery-overlay">
                         <div class="gallery-info">

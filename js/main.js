@@ -1,9 +1,11 @@
 // Initialize Feather Icons
 document.addEventListener('DOMContentLoaded', function() {
     feather.replace();
+    loadDynamicContent();
     initializeNavigation();
     initializeScrollEffects();
     initializeImageModal();
+    initializeGalleryFilters();
 });
 
 // Navigation functionality
@@ -220,6 +222,62 @@ function initializeLazyLoading() {
     }
 }
 
+// Load dynamic content from admin changes
+function loadDynamicContent() {
+    try {
+        const contentData = localStorage.getItem('portfolioContent');
+        if (!contentData) return;
+        
+        const content = JSON.parse(contentData);
+        
+        // Update hero section
+        if (content.hero) {
+            const heroTitle = document.querySelector('.hero-title');
+            const heroSubtitle = document.querySelector('.hero-subtitle');
+            if (heroTitle && content.hero.title) heroTitle.textContent = content.hero.title;
+            if (heroSubtitle && content.hero.subtitle) heroSubtitle.textContent = content.hero.subtitle;
+        }
+        
+        // Update about section
+        if (content.about) {
+            const aboutDescriptions = document.querySelectorAll('.about-description');
+            if (aboutDescriptions.length >= 2) {
+                if (content.about.paragraph1) aboutDescriptions[0].textContent = content.about.paragraph1;
+                if (content.about.paragraph2) aboutDescriptions[1].textContent = content.about.paragraph2;
+            }
+        }
+        
+        // Update contact section
+        if (content.contact) {
+            const contactItems = document.querySelectorAll('.contact-item span');
+            if (contactItems.length >= 3) {
+                if (content.contact.email) contactItems[0].textContent = content.contact.email;
+                if (content.contact.instagram) contactItems[1].textContent = content.contact.instagram;
+                if (content.contact.status) contactItems[2].textContent = content.contact.status;
+            }
+        }
+        
+        // Update portrait image
+        if (content.images && content.images.portrait) {
+            const aboutPlaceholder = document.querySelector('.about-placeholder');
+            if (aboutPlaceholder) {
+                aboutPlaceholder.innerHTML = `<img src="${content.images.portrait}" alt="Portrait" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+            }
+        }
+        
+        // Update logo (if there's a logo display area)
+        if (content.images && content.images.logo) {
+            const navTitle = document.querySelector('.nav-title');
+            if (navTitle) {
+                navTitle.innerHTML = `<img src="${content.images.logo}" alt="Logo" style="height: 40px; width: auto;">`;
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error loading dynamic content:', error);
+    }
+}
+
 // Initialize on load
 window.addEventListener('load', function() {
     initializeLazyLoading();
@@ -233,6 +291,73 @@ window.addEventListener('resize', debounce(function() {
     // Update any size-dependent calculations
     handleScrollSpy();
 }, 250));
+
+// Gallery Filtering Functions
+
+// Initialize gallery filters
+function initializeGalleryFilters() {
+    updateFilterButtons();
+}
+
+// Filter gallery by tag
+function filterGallery(filterTag) {
+    const galleryItems = document.querySelectorAll('.gallery-item');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    
+    // Update active filter button
+    filterButtons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent.toLowerCase() === filterTag || 
+            (filterTag === 'all' && btn.textContent === 'All')) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Filter gallery items
+    galleryItems.forEach(item => {
+        const itemTags = item.getAttribute('data-tags') || '';
+        const tagArray = itemTags.split(',').map(tag => tag.trim().toLowerCase());
+        
+        if (filterTag === 'all' || tagArray.includes(filterTag.toLowerCase())) {
+            item.style.display = 'block';
+            item.classList.add('fade-in');
+        } else {
+            item.style.display = 'none';
+            item.classList.remove('fade-in');
+        }
+    });
+    
+    // Update scroll effects for visible items
+    setTimeout(() => {
+        initializeScrollEffects();
+    }, 100);
+}
+
+// Update filter buttons based on available tags
+function updateFilterButtons() {
+    const galleryItems = document.querySelectorAll('.gallery-item');
+    const allTags = new Set();
+    
+    // Collect all unique tags
+    galleryItems.forEach(item => {
+        const itemTags = item.getAttribute('data-tags') || '';
+        const tagArray = itemTags.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag);
+        tagArray.forEach(tag => allTags.add(tag));
+    });
+    
+    // Create filter buttons
+    const filterButtons = document.getElementById('filterButtons');
+    if (filterButtons && allTags.size > 0) {
+        const sortedTags = Array.from(allTags).sort();
+        
+        filterButtons.innerHTML = `
+            <button class="filter-btn active" onclick="filterGallery('all')">All</button>
+            ${sortedTags.map(tag => 
+                `<button class="filter-btn" onclick="filterGallery('${tag}')">${tag.charAt(0).toUpperCase() + tag.slice(1)}</button>`
+            ).join('')}
+        `;
+    }
+}
 
 // Performance monitoring (optional)
 if ('performance' in window) {
