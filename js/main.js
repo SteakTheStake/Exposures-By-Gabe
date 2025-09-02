@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeNavigation();
     initializeScrollEffects();
     initializeImageModal();
-    initializeGalleryFilters();
 });
 
 // Navigation functionality
@@ -292,72 +291,7 @@ window.addEventListener('resize', debounce(function() {
     handleScrollSpy();
 }, 250));
 
-// Gallery Filtering Functions
-
-// Initialize gallery filters
-function initializeGalleryFilters() {
-    updateFilterButtons();
-}
-
-// Filter gallery by tag
-function filterGallery(filterTag) {
-    const galleryItems = document.querySelectorAll('.gallery-item');
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    
-    // Update active filter button
-    filterButtons.forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.textContent.toLowerCase() === filterTag || 
-            (filterTag === 'all' && btn.textContent === 'All')) {
-            btn.classList.add('active');
-        }
-    });
-    
-    // Filter gallery items
-    galleryItems.forEach(item => {
-        const itemTags = item.getAttribute('data-tags') || '';
-        const tagArray = itemTags.split(',').map(tag => tag.trim().toLowerCase());
-        
-        if (filterTag === 'all' || tagArray.includes(filterTag.toLowerCase())) {
-            item.style.display = 'block';
-            item.classList.add('fade-in');
-        } else {
-            item.style.display = 'none';
-            item.classList.remove('fade-in');
-        }
-    });
-    
-    // Update scroll effects for visible items
-    setTimeout(() => {
-        initializeScrollEffects();
-    }, 100);
-}
-
-// Update filter buttons based on available tags
-function updateFilterButtons() {
-    const galleryItems = document.querySelectorAll('.gallery-item');
-    const allTags = new Set();
-    
-    // Collect all unique tags
-    galleryItems.forEach(item => {
-        const itemTags = item.getAttribute('data-tags') || '';
-        const tagArray = itemTags.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag);
-        tagArray.forEach(tag => allTags.add(tag));
-    });
-    
-    // Create filter buttons
-    const filterButtons = document.getElementById('filterButtons');
-    if (filterButtons && allTags.size > 0) {
-        const sortedTags = Array.from(allTags).sort();
-        
-        filterButtons.innerHTML = `
-            <button class="filter-btn active" onclick="filterGallery('all')">All</button>
-            ${sortedTags.map(tag => 
-                `<button class="filter-btn" onclick="filterGallery('${tag}')">${tag.charAt(0).toUpperCase() + tag.slice(1)}</button>`
-            ).join('')}
-        `;
-    }
-}
+// Gallery filtering is now handled by gallery-manager.js
 
 // Performance monitoring (optional)
 if ('performance' in window) {

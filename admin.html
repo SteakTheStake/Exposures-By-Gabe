@@ -17,7 +17,7 @@
             </h1>
             <div class="nav-links">
                 <a href="index.html" class="nav-link">Main Site</a>
-                <a href="upload.html" class="nav-link">Upload Images</a>
+                <a href="#gallery-management" class="nav-link">Gallery Management</a>
                 <button id="logoutBtn" class="nav-link logout-btn" onclick="logout()" style="display: none;">Logout</button>
             </div>
         </div>
@@ -97,47 +97,17 @@
                 </div>
             </div>
 
-            <!-- Image Management Section -->
+            <!-- Gallery Management Section -->
+            <div class="admin-section" id="gallery-management">
+                <div id="imageManagementSection">
+                    <!-- Gallery images will be populated by admin-gallery.js -->
+                </div>
+            </div>
+
+            <!-- Tag Editor Section -->
             <div class="admin-section">
-                <h3>Site Images</h3>
-                <div class="admin-grid">
-                    <div class="admin-card subtle-bg elegant-shadow">
-                        <h4>Site Logo</h4>
-                        <div class="image-upload-area">
-                            <div class="current-image" id="currentLogo">
-                                <div class="placeholder-image">
-                                    <i data-feather="image"></i>
-                                    <p>Current Logo</p>
-                                </div>
-                            </div>
-                            <div class="upload-controls">
-                                <input type="file" id="logoInput" accept="image/*" style="display: none;" onchange="handleLogoUpload(event)">
-                                <button onclick="document.getElementById('logoInput').click()" class="admin-btn">
-                                    <i data-feather="upload"></i>
-                                    Upload Logo
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="admin-card subtle-bg elegant-shadow">
-                        <h4>Portrait Image</h4>
-                        <div class="image-upload-area">
-                            <div class="current-image" id="currentPortrait">
-                                <div class="placeholder-image">
-                                    <i data-feather="user"></i>
-                                    <p>Current Portrait</p>
-                                </div>
-                            </div>
-                            <div class="upload-controls">
-                                <input type="file" id="portraitInput" accept="image/*" style="display: none;" onchange="handlePortraitUpload(event)">
-                                <button onclick="document.getElementById('portraitInput').click()" class="admin-btn">
-                                    <i data-feather="upload"></i>
-                                    Upload Portrait
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                <div id="tagEditorSection">
+                    <!-- Tag editor will be populated by admin-gallery.js -->
                 </div>
             </div>
 
@@ -148,6 +118,8 @@
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
+    <script src="js/gallery-manager.js"></script>
+    <script src="js/admin-gallery.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/admin.js"></script>
 </body>
