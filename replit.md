@@ -1,8 +1,8 @@
-# Photography Portfolio
+# Exposures By Gabe
 
 ## Overview
 
-A modern, dark-themed photography portfolio website that allows visitors to view a curated gallery and provides password-protected functionality for uploading new images. The application features a responsive design with smooth navigation, image modal viewing, and an administrative upload interface. Built with vanilla HTML, CSS, and JavaScript, it uses browser localStorage for session management and includes drag-and-drop file upload capabilities.
+A modern, dark-themed photography portfolio website showcasing Gabe's photography work. The site allows visitors to view a curated gallery and provides password-protected functionality for uploading new images. The application features a responsive design with smooth navigation, image modal viewing, and an administrative upload interface. Built with vanilla HTML, CSS, and JavaScript, it uses browser localStorage for session management and includes drag-and-drop file upload capabilities.
 
 ## User Preferences
 
