@@ -5,6 +5,25 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeNavigation();
     initializeScrollEffects();
     initializeImageModal();
+    
+    // Initialize gallery
+    const galleryManager = new GalleryManager();
+    galleryManager.init();
+    
+    // Make gallery manager globally available for refresh functionality
+    window.galleryManager = galleryManager;
+    
+    // Add refresh button for development/testing
+    const refreshButton = document.createElement('button');
+    refreshButton.textContent = 'Refresh Gallery';
+    refreshButton.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 1000; padding: 10px; background: var(--accent-color); color: white; border: none; border-radius: 5px; cursor: pointer; display: none;';
+    refreshButton.onclick = () => galleryManager.refreshGallery();
+    document.body.appendChild(refreshButton);
+    
+    // Show refresh button in development mode
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        refreshButton.style.display = 'block';
+    }
 });
 
 // Navigation functionality

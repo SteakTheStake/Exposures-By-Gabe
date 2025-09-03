@@ -15,7 +15,7 @@ class GalleryManager {
         this.setupFilters();
     }
 
-    // Load images from the GitHub repository /Img folder
+    // Load images dynamically from the GitHub repository /Img folder
     async loadImagesFromRepository() {
         // GitHub repository configuration
         const githubConfig = {
@@ -25,46 +25,60 @@ class GalleryManager {
             folder: 'Img'
         };
 
-        // Known images in the repository - add your image filenames here
-        const knownImages = [
-            'DSC_0696-2.jpg'
-            // Add more image filenames here as you upload them to your repository
-        ];
-
-        let imageCounter = 1;
-        const detectedImages = [];
-
-        // Process known images
-        for (const filename of knownImages) {
-            try {
-                const githubUrl = `https://raw.githubusercontent.com/${githubConfig.username}/${githubConfig.repository}/refs/heads/${githubConfig.branch}/${githubConfig.folder}/${filename}`;
-                
-                // Test if image exists
-                const response = await fetch(githubUrl, { method: 'HEAD' });
-                if (response.ok) {
-                    const imageData = await this.loadImageWithMetadata(githubUrl, filename, imageCounter);
-                    detectedImages.push(imageData);
-                    imageCounter++;
-                }
-            } catch (error) {
-                console.log(`Could not load image: ${filename}`);
+        try {
+            // Fetch directory contents from GitHub API
+            const apiUrl = `https://api.github.com/repos/${githubConfig.username}/${githubConfig.repository}/contents/${githubConfig.folder}`;
+            const response = await fetch(apiUrl);
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch repository contents');
             }
-        }
 
-        // Process each detected image and merge with stored metadata
-        this.images = detectedImages.map(img => {
-            const metadata = this.imageMetadata[img.filename] || {};
-            return {
-                id: img.filename,
-                filename: img.filename,
-                url: img.url, // Use the GitHub URL directly
-                alt: img.alt,
-                title: metadata.title || img.title,
-                tags: metadata.tags || img.defaultTags,
-                category: metadata.category || (img.defaultTags[0] || 'photography'),
-                captureDate: img.captureDate
-            };
-        });
+            const contents = await response.json();
+            const detectedImages = [];
+            let imageCounter = 1;
+
+            // Filter for image files and process them
+            const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'tif'];
+            
+            for (const item of contents) {
+                // Check if it's a file (not a directory) and has an image extension
+                if (item.type === 'file') {
+                    const extension = item.name.toLowerCase().split('.').pop();
+                    if (imageExtensions.includes(extension)) {
+                        // Generate the raw GitHub URL for the image
+                        const githubRawUrl = `https://raw.githubusercontent.com/${githubConfig.username}/${githubConfig.repository}/refs/heads/${githubConfig.branch}/${githubConfig.folder}/${item.name}`;
+                        
+                        try {
+                            const imageData = await this.loadImageWithMetadata(githubRawUrl, item.name, imageCounter);
+                            detectedImages.push(imageData);
+                            imageCounter++;
+                        } catch (error) {
+                            console.log(`Could not load image: ${item.name}`);
+                        }
+                    }
+                }
+            }
+
+            // Process each detected image and merge with stored metadata
+            this.images = detectedImages.map(img => {
+                const metadata = this.imageMetadata[img.filename] || {};
+                return {
+                    id: img.filename,
+                    filename: img.filename,
+                    url: img.url, // Use the GitHub raw URL directly
+                    alt: img.alt,
+                    title: metadata.title || img.title,
+                    tags: metadata.tags || img.defaultTags,
+                    category: metadata.category || (img.defaultTags[0] || 'photography'),
+                    captureDate: img.captureDate
+                };
+            });
+
+        } catch (error) {
+            console.error('Error loading images from repository:', error);
+            this.images = [];
+        }
     }
 
     // Get GitHub repository configuration
@@ -77,14 +91,18 @@ class GalleryManager {
         };
     }
 
-    // Add a new image to the known images list
-    addImageToGallery(filename) {
+    // Refresh gallery to check for new images
+    async refreshGallery() {
+        console.log('Refreshing gallery from GitHub repository...');
+        await this.loadImagesFromRepository();
+        this.renderGallery();
+        this.setupFilters();
+    }
+
+    // Generate GitHub raw URL for any filename
+    generateGithubRawUrl(filename) {
         const config = this.getGithubConfig();
-        const githubUrl = `https://raw.githubusercontent.com/${config.username}/${config.repository}/refs/heads/${config.branch}/${config.folder}/${filename}`;
-        
-        // This could be extended to automatically update the known images list
-        console.log(`Add this image to the knownImages array in loadImagesFromRepository(): ${filename}`);
-        return githubUrl;
+        return `https://raw.githubusercontent.com/${config.username}/${config.repository}/refs/heads/${config.branch}/${config.folder}/${filename}`;
     }
 
     // Load image and extract metadata
@@ -262,7 +280,7 @@ class GalleryManager {
                 <div class="empty-gallery" style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--text-secondary);">
                     <i data-feather="image" style="width: 48px; height: 48px; margin-bottom: 1rem;"></i>
                     <h3 style="margin-bottom: 1rem; color: var(--text-primary);">No Images Found</h3>
-                    <p>Add image filenames to the <code>knownImages</code> array in gallery-manager.js to display them from your GitHub repository.</p>
+                    <p>Upload images to the <code>/Img</code> folder in your GitHub repository and they will automatically appear here.</p>
                     <p style="margin-top: 1rem; font-size: 0.9rem;">Supported formats: JPG, PNG, GIF, WebP</p>
                 </div>
             `;
