@@ -22,8 +22,7 @@ const DEFAULT_CONTENT = {
         paragraph2: "My work focuses on landscape and nature photography, always seeking to find the extraordinary in the ordinary and to showcase the incredible diversity and beauty of our planet."
     },
     contact: {
-        email: "hello@photographer.com",
-        instagram: "@photographer",
+        instagram: "@gabe_corr",
         status: "Available for commissions"
     },
     images: {
@@ -225,7 +224,6 @@ function loadContentIntoForms() {
     document.getElementById('aboutText2').value = content.about.paragraph2;
     
     // Load contact content
-    document.getElementById('contactEmail').value = content.contact.email;
     document.getElementById('contactInstagram').value = content.contact.instagram;
     document.getElementById('contactStatus').value = content.contact.status;
 }
@@ -299,24 +297,16 @@ function updateAboutContent() {
 
 // Update contact content
 function updateContactContent() {
-    const email = document.getElementById('contactEmail').value.trim();
     const instagram = document.getElementById('contactInstagram').value.trim();
     const status = document.getElementById('contactStatus').value.trim();
     
-    if (!email || !instagram || !status) {
+    if (!instagram || !status) {
         showAdminResult('Please fill in all contact fields', false);
         return;
     }
     
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        showAdminResult('Please enter a valid email address', false);
-        return;
-    }
-    
     const contactContent = {
-        contact: { email, instagram, status }
+        contact: { instagram, status }
     };
     
     if (saveSiteContent(contactContent)) {

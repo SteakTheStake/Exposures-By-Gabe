@@ -249,10 +249,9 @@ function loadDynamicContent() {
         // Update contact section
         if (content.contact) {
             const contactItems = document.querySelectorAll('.contact-item span');
-            if (contactItems.length >= 3) {
-                if (content.contact.email) contactItems[0].textContent = content.contact.email;
-                if (content.contact.instagram) contactItems[1].textContent = content.contact.instagram;
-                if (content.contact.status) contactItems[2].textContent = content.contact.status;
+            if (contactItems.length >= 2) {
+                if (content.contact.instagram) contactItems[0].textContent = content.contact.instagram;
+                if (content.contact.status) contactItems[1].textContent = content.contact.status;
             }
         }
         
