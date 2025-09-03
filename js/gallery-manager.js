@@ -15,27 +15,39 @@ class GalleryManager {
         this.setupFilters();
     }
 
-    // Load images from the repository /Img folder
+    // Load images from the GitHub repository /Img folder
     async loadImagesFromRepository() {
-        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'tif'];
-        const detectedImages = [];
-        let imageCounter = 1;
+        // GitHub repository configuration
+        const githubConfig = {
+            username: 'SteakTheStake',
+            repository: 'Exposures-By-Gabe',
+            branch: 'main',
+            folder: 'Img'
+        };
 
-        // Try to get directory listing by attempting to fetch common filenames
-        // This is a workaround since we can't directly list directory contents via HTTP
-        const testFilenames = await this.generatePossibleFilenames();
-        
-        for (const filename of testFilenames) {
+        // Known images in the repository - add your image filenames here
+        const knownImages = [
+            'DSC_0696-2.jpg'
+            // Add more image filenames here as you upload them to your repository
+        ];
+
+        let imageCounter = 1;
+        const detectedImages = [];
+
+        // Process known images
+        for (const filename of knownImages) {
             try {
-                const response = await fetch(`Img/${filename}`, { method: 'HEAD' });
+                const githubUrl = `https://raw.githubusercontent.com/${githubConfig.username}/${githubConfig.repository}/refs/heads/${githubConfig.branch}/${githubConfig.folder}/${filename}`;
+                
+                // Test if image exists
+                const response = await fetch(githubUrl, { method: 'HEAD' });
                 if (response.ok) {
-                    // Load the image to extract metadata
-                    const imageData = await this.loadImageWithMetadata(`Img/${filename}`, filename, imageCounter);
+                    const imageData = await this.loadImageWithMetadata(githubUrl, filename, imageCounter);
                     detectedImages.push(imageData);
                     imageCounter++;
                 }
             } catch (error) {
-                // Image doesn't exist or can't be loaded, continue
+                console.log(`Could not load image: ${filename}`);
             }
         }
 
@@ -45,7 +57,7 @@ class GalleryManager {
             return {
                 id: img.filename,
                 filename: img.filename,
-                url: `Img/${img.filename}`,
+                url: img.url, // Use the GitHub URL directly
                 alt: img.alt,
                 title: metadata.title || img.title,
                 tags: metadata.tags || img.defaultTags,
@@ -55,70 +67,24 @@ class GalleryManager {
         });
     }
 
-    // Generate possible filenames to test for
-    async generatePossibleFilenames() {
-        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'tif'];
-        const possibleNames = [];
-        
-        // Generate comprehensive list of possible image names
-        const baseNames = [
-            // Date-based patterns
-            ...this.generateDatePatterns(),
-            // Common photography naming
-            'IMG', 'DSC', 'PHOTO', 'PIC', 'IMAGE',
-            // Numbered sequences
-            ...this.generateNumberedSequences(),
-            // Common descriptive names
-            'landscape', 'portrait', 'nature', 'sunset', 'sunrise', 'mountain', 
-            'forest', 'ocean', 'beach', 'city', 'street', 'macro', 'wildlife',
-            'architecture', 'travel', 'family', 'wedding', 'event'
-        ];
-
-        // Create full filenames with extensions
-        for (const baseName of baseNames) {
-            for (const ext of imageExtensions) {
-                possibleNames.push(`${baseName}.${ext}`);
-                // Also try uppercase extensions
-                possibleNames.push(`${baseName}.${ext.toUpperCase()}`);
-            }
-        }
-
-        return [...new Set(possibleNames)]; // Remove duplicates
+    // Get GitHub repository configuration
+    getGithubConfig() {
+        return {
+            username: 'SteakTheStake',
+            repository: 'Exposures-By-Gabe',
+            branch: 'main',
+            folder: 'Img'
+        };
     }
 
-    // Generate date-based filename patterns
-    generateDatePatterns() {
-        const patterns = [];
-        const currentYear = new Date().getFullYear();
+    // Add a new image to the known images list
+    addImageToGallery(filename) {
+        const config = this.getGithubConfig();
+        const githubUrl = `https://raw.githubusercontent.com/${config.username}/${config.repository}/refs/heads/${config.branch}/${config.folder}/${filename}`;
         
-        // Generate patterns for last 5 years
-        for (let year = currentYear - 4; year <= currentYear; year++) {
-            for (let month = 1; month <= 12; month++) {
-                for (let day = 1; day <= 31; day++) {
-                    const mm = month.toString().padStart(2, '0');
-                    const dd = day.toString().padStart(2, '0');
-                    patterns.push(`${year}${mm}${dd}`);
-                    patterns.push(`${year}-${mm}-${dd}`);
-                    patterns.push(`${year}_${mm}_${dd}`);
-                }
-            }
-        }
-        return patterns;
-    }
-
-    // Generate numbered sequence patterns
-    generateNumberedSequences() {
-        const patterns = [];
-        const prefixes = ['IMG', 'DSC', 'PHOTO', 'PIC', 'IMAGE', ''];
-        
-        for (const prefix of prefixes) {
-            for (let i = 1; i <= 9999; i++) {
-                const number = i.toString().padStart(4, '0');
-                patterns.push(prefix ? `${prefix}_${number}` : number);
-                patterns.push(prefix ? `${prefix}${number}` : number);
-            }
-        }
-        return patterns;
+        // This could be extended to automatically update the known images list
+        console.log(`Add this image to the knownImages array in loadImagesFromRepository(): ${filename}`);
+        return githubUrl;
     }
 
     // Load image and extract metadata
@@ -134,6 +100,7 @@ class GalleryManager {
                 
                 resolve({
                     filename: filename,
+                    url: imageUrl, // Store the full GitHub URL
                     alt: `${title} photograph`,
                     title: title,
                     captureDate: captureDate,
@@ -147,6 +114,7 @@ class GalleryManager {
                 // If image fails to load, still create entry
                 resolve({
                     filename: filename,
+                    url: imageUrl,
                     alt: `Image Number: ${imageNumber} photograph`,
                     title: `Image Number: ${imageNumber}`,
                     captureDate: null,
@@ -294,7 +262,7 @@ class GalleryManager {
                 <div class="empty-gallery" style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--text-secondary);">
                     <i data-feather="image" style="width: 48px; height: 48px; margin-bottom: 1rem;"></i>
                     <h3 style="margin-bottom: 1rem; color: var(--text-primary);">No Images Found</h3>
-                    <p>Add images to the <code>/Img</code> folder in your repository to see them here.</p>
+                    <p>Add image filenames to the <code>knownImages</code> array in gallery-manager.js to display them from your GitHub repository.</p>
                     <p style="margin-top: 1rem; font-size: 0.9rem;">Supported formats: JPG, PNG, GIF, WebP</p>
                 </div>
             `;
