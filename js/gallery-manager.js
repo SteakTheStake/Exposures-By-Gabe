@@ -34,7 +34,7 @@ class GalleryManager {
                 const filename = `${baseName}.${ext}`;
                 try {
                     // Test if image exists by attempting to load it
-                    const response = await fetch(`img/${filename}`, { method: 'HEAD' });
+                    const response = await fetch(`Img/${filename}`, { method: 'HEAD' });
                     if (response.ok) {
                         detectedImages.push({
                             filename: filename,
@@ -54,7 +54,7 @@ class GalleryManager {
             return {
                 id: img.filename,
                 filename: img.filename,
-                url: `img/${img.filename}`,
+                url: `Img/${img.filename}`,
                 alt: img.alt,
                 title: metadata.title || this.generateTitleFromFilename(img.filename),
                 tags: metadata.tags || img.defaultTags,
@@ -160,7 +160,7 @@ class GalleryManager {
                 <div class="empty-gallery" style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--text-secondary);">
                     <i data-feather="image" style="width: 48px; height: 48px; margin-bottom: 1rem;"></i>
                     <h3 style="margin-bottom: 1rem; color: var(--text-primary);">No Images Found</h3>
-                    <p>Add images to the <code>/img</code> folder in your repository to see them here.</p>
+                    <p>Add images to the <code>/Img</code> folder in your repository to see them here.</p>
                     <p style="margin-top: 1rem; font-size: 0.9rem;">Supported formats: JPG, PNG, GIF, WebP</p>
                 </div>
             `;
