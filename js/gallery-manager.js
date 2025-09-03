@@ -15,36 +15,27 @@ class GalleryManager {
         this.setupFilters();
     }
 
-    // Load images from the repository /img folder
+    // Load images from the repository /Img folder
     async loadImagesFromRepository() {
-        // Try to detect actual images in the /img directory
-        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'tif'];
         const detectedImages = [];
-        
-        // Common image filenames to check for
-        const possibleImages = [
-            'mountain-vista', 'forest-path', 'ocean-waves', 'misty-forest', 
-            'rocky-peaks', 'golden-hour', 'landscape', 'nature', 'photography',
-            'portrait', 'sunset', 'sunrise', 'beach', 'forest', 'mountain'
-        ];
+        let imageCounter = 1;
 
-        // Check for actual images in the /img directory
-        for (const baseName of possibleImages) {
-            for (const ext of imageExtensions) {
-                const filename = `${baseName}.${ext}`;
-                try {
-                    // Test if image exists by attempting to load it
-                    const response = await fetch(`Img/${filename}`, { method: 'HEAD' });
-                    if (response.ok) {
-                        detectedImages.push({
-                            filename: filename,
-                            alt: this.generateAltFromFilename(filename),
-                            defaultTags: this.generateTagsFromFilename(filename)
-                        });
-                    }
-                } catch (error) {
-                    // Image doesn't exist, continue checking
+        // Try to get directory listing by attempting to fetch common filenames
+        // This is a workaround since we can't directly list directory contents via HTTP
+        const testFilenames = await this.generatePossibleFilenames();
+        
+        for (const filename of testFilenames) {
+            try {
+                const response = await fetch(`Img/${filename}`, { method: 'HEAD' });
+                if (response.ok) {
+                    // Load the image to extract metadata
+                    const imageData = await this.loadImageWithMetadata(`Img/${filename}`, filename, imageCounter);
+                    detectedImages.push(imageData);
+                    imageCounter++;
                 }
+            } catch (error) {
+                // Image doesn't exist or can't be loaded, continue
             }
         }
 
@@ -56,10 +47,153 @@ class GalleryManager {
                 filename: img.filename,
                 url: `Img/${img.filename}`,
                 alt: img.alt,
-                title: metadata.title || this.generateTitleFromFilename(img.filename),
+                title: metadata.title || img.title,
                 tags: metadata.tags || img.defaultTags,
-                category: metadata.category || (img.defaultTags[0] || 'uncategorized')
+                category: metadata.category || (img.defaultTags[0] || 'photography'),
+                captureDate: img.captureDate
             };
+        });
+    }
+
+    // Generate possible filenames to test for
+    async generatePossibleFilenames() {
+        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'tif'];
+        const possibleNames = [];
+        
+        // Generate comprehensive list of possible image names
+        const baseNames = [
+            // Date-based patterns
+            ...this.generateDatePatterns(),
+            // Common photography naming
+            'IMG', 'DSC', 'PHOTO', 'PIC', 'IMAGE',
+            // Numbered sequences
+            ...this.generateNumberedSequences(),
+            // Common descriptive names
+            'landscape', 'portrait', 'nature', 'sunset', 'sunrise', 'mountain', 
+            'forest', 'ocean', 'beach', 'city', 'street', 'macro', 'wildlife',
+            'architecture', 'travel', 'family', 'wedding', 'event'
+        ];
+
+        // Create full filenames with extensions
+        for (const baseName of baseNames) {
+            for (const ext of imageExtensions) {
+                possibleNames.push(`${baseName}.${ext}`);
+                // Also try uppercase extensions
+                possibleNames.push(`${baseName}.${ext.toUpperCase()}`);
+            }
+        }
+
+        return [...new Set(possibleNames)]; // Remove duplicates
+    }
+
+    // Generate date-based filename patterns
+    generateDatePatterns() {
+        const patterns = [];
+        const currentYear = new Date().getFullYear();
+        
+        // Generate patterns for last 5 years
+        for (let year = currentYear - 4; year <= currentYear; year++) {
+            for (let month = 1; month <= 12; month++) {
+                for (let day = 1; day <= 31; day++) {
+                    const mm = month.toString().padStart(2, '0');
+                    const dd = day.toString().padStart(2, '0');
+                    patterns.push(`${year}${mm}${dd}`);
+                    patterns.push(`${year}-${mm}-${dd}`);
+                    patterns.push(`${year}_${mm}_${dd}`);
+                }
+            }
+        }
+        return patterns;
+    }
+
+    // Generate numbered sequence patterns
+    generateNumberedSequences() {
+        const patterns = [];
+        const prefixes = ['IMG', 'DSC', 'PHOTO', 'PIC', 'IMAGE', ''];
+        
+        for (const prefix of prefixes) {
+            for (let i = 1; i <= 9999; i++) {
+                const number = i.toString().padStart(4, '0');
+                patterns.push(prefix ? `${prefix}_${number}` : number);
+                patterns.push(prefix ? `${prefix}${number}` : number);
+            }
+        }
+        return patterns;
+    }
+
+    // Load image and extract metadata
+    async loadImageWithMetadata(imageUrl, filename, imageNumber) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            
+            img.onload = () => {
+                // Try to extract EXIF data (this is limited in browsers)
+                const captureDate = this.extractDateFromImage(img, filename);
+                const title = captureDate ? this.formatDateTitle(captureDate) : `Image Number: ${imageNumber}`;
+                
+                resolve({
+                    filename: filename,
+                    alt: `${title} photograph`,
+                    title: title,
+                    captureDate: captureDate,
+                    defaultTags: this.generateTagsFromFilename(filename),
+                    width: img.naturalWidth,
+                    height: img.naturalHeight
+                });
+            };
+            
+            img.onerror = () => {
+                // If image fails to load, still create entry
+                resolve({
+                    filename: filename,
+                    alt: `Image Number: ${imageNumber} photograph`,
+                    title: `Image Number: ${imageNumber}`,
+                    captureDate: null,
+                    defaultTags: ['photography'],
+                    width: 0,
+                    height: 0
+                });
+            };
+            
+            img.src = imageUrl;
+        });
+    }
+
+    // Extract date from image (limited without EXIF library)
+    extractDateFromImage(img, filename) {
+        // Try to extract date from filename patterns
+        const datePatterns = [
+            /(\d{4})(\d{2})(\d{2})/,  // YYYYMMDD
+            /(\d{4})-(\d{2})-(\d{2})/, // YYYY-MM-DD
+            /(\d{4})_(\d{2})_(\d{2})/, // YYYY_MM_DD
+            /IMG_(\d{4})(\d{2})(\d{2})/, // IMG_YYYYMMDD
+            /DSC(\d{4})(\d{2})(\d{2})/   // DSCYYYYMMDD
+        ];
+
+        for (const pattern of datePatterns) {
+            const match = filename.match(pattern);
+            if (match) {
+                const year = parseInt(match[1]);
+                const month = parseInt(match[2]) - 1; // JavaScript months are 0-indexed
+                const day = parseInt(match[3]);
+                
+                if (year >= 1900 && year <= new Date().getFullYear() && 
+                    month >= 0 && month <= 11 && day >= 1 && day <= 31) {
+                    return new Date(year, month, day);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    // Format date for title display
+    formatDateTitle(date) {
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
         });
     }
 
