@@ -17,54 +17,44 @@ class GalleryManager {
 
     // Load images from the repository /img folder
     async loadImagesFromRepository() {
-        // For GitHub Pages, we need to maintain a list of images
-        // This would be updated when new images are added to the repository
-        const repositoryImages = [
-            {
-                filename: 'mountain-vista.jpg',
-                alt: 'Mountain landscape with dramatic sky',
-                defaultTags: ['landscape', 'mountain'],
-                fallbackUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop'
-            },
-            {
-                filename: 'forest-path.jpg', 
-                alt: 'Winding forest path through tall trees',
-                defaultTags: ['nature', 'forest'],
-                fallbackUrl: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop'
-            },
-            {
-                filename: 'ocean-waves.jpg',
-                alt: 'Ocean waves crashing on rocky shore',
-                defaultTags: ['seascape', 'ocean'],
-                fallbackUrl: 'https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?w=800&h=600&fit=crop'
-            },
-            {
-                filename: 'misty-forest.jpg',
-                alt: 'Misty forest with morning fog',
-                defaultTags: ['nature', 'forest', 'mist'],
-                fallbackUrl: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop'
-            },
-            {
-                filename: 'rocky-peaks.jpg',
-                alt: 'Rocky mountain peaks at sunset',
-                defaultTags: ['landscape', 'mountain', 'rock'],
-                fallbackUrl: 'https://images.unsplash.com/photo-1464822759844-d150baec843a?w=800&h=600&fit=crop'
-            },
-            {
-                filename: 'golden-hour.jpg',
-                alt: 'Golden hour landscape photography',
-                defaultTags: ['landscape', 'sunset', 'golden'],
-                fallbackUrl: 'https://images.unsplash.com/photo-1501436513145-30f24e19fcc4?w=800&h=600&fit=crop'
-            }
+        // Try to detect actual images in the /img directory
+        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        const detectedImages = [];
+        
+        // Common image filenames to check for
+        const possibleImages = [
+            'mountain-vista', 'forest-path', 'ocean-waves', 'misty-forest', 
+            'rocky-peaks', 'golden-hour', 'landscape', 'nature', 'photography',
+            'portrait', 'sunset', 'sunrise', 'beach', 'forest', 'mountain'
         ];
 
-        // Process each image and merge with stored metadata
-        this.images = repositoryImages.map(img => {
+        // Check for actual images in the /img directory
+        for (const baseName of possibleImages) {
+            for (const ext of imageExtensions) {
+                const filename = `${baseName}.${ext}`;
+                try {
+                    // Test if image exists by attempting to load it
+                    const response = await fetch(`img/${filename}`, { method: 'HEAD' });
+                    if (response.ok) {
+                        detectedImages.push({
+                            filename: filename,
+                            alt: this.generateAltFromFilename(filename),
+                            defaultTags: this.generateTagsFromFilename(filename)
+                        });
+                    }
+                } catch (error) {
+                    // Image doesn't exist, continue checking
+                }
+            }
+        }
+
+        // Process each detected image and merge with stored metadata
+        this.images = detectedImages.map(img => {
             const metadata = this.imageMetadata[img.filename] || {};
             return {
                 id: img.filename,
                 filename: img.filename,
-                url: img.fallbackUrl || `img/${img.filename}`,
+                url: `img/${img.filename}`,
                 alt: img.alt,
                 title: metadata.title || this.generateTitleFromFilename(img.filename),
                 tags: metadata.tags || img.defaultTags,
@@ -79,6 +69,39 @@ class GalleryManager {
             .replace(/\.[^/.]+$/, '') // Remove extension
             .replace(/[-_]/g, ' ') // Replace dashes and underscores with spaces
             .replace(/\b\w/g, l => l.toUpperCase()); // Capitalize first letter of each word
+    }
+
+    // Generate alt text from filename
+    generateAltFromFilename(filename) {
+        const title = this.generateTitleFromFilename(filename);
+        return `${title} photograph`;
+    }
+
+    // Generate default tags from filename
+    generateTagsFromFilename(filename) {
+        const name = filename.replace(/\.[^/.]+$/, '').toLowerCase();
+        const tagMap = {
+            'mountain': ['landscape', 'mountain'],
+            'forest': ['nature', 'forest'],
+            'ocean': ['seascape', 'ocean'],
+            'beach': ['seascape', 'beach'],
+            'sunset': ['landscape', 'sunset'],
+            'sunrise': ['landscape', 'sunrise'],
+            'nature': ['nature'],
+            'landscape': ['landscape'],
+            'portrait': ['portrait'],
+            'photography': ['photography']
+        };
+
+        // Find matching tags
+        for (const [keyword, tags] of Object.entries(tagMap)) {
+            if (name.includes(keyword)) {
+                return tags;
+            }
+        }
+
+        // Default tags
+        return ['photography'];
     }
 
     // Save metadata to localStorage
@@ -131,6 +154,22 @@ class GalleryManager {
         if (!galleryGrid) return;
 
         const imagesToRender = filteredImages || this.images;
+        
+        if (imagesToRender.length === 0) {
+            galleryGrid.innerHTML = `
+                <div class="empty-gallery" style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--text-secondary);">
+                    <i data-feather="image" style="width: 48px; height: 48px; margin-bottom: 1rem;"></i>
+                    <h3 style="margin-bottom: 1rem; color: var(--text-primary);">No Images Found</h3>
+                    <p>Add images to the <code>/img</code> folder in your repository to see them here.</p>
+                    <p style="margin-top: 1rem; font-size: 0.9rem;">Supported formats: JPG, PNG, GIF, WebP</p>
+                </div>
+            `;
+            // Refresh Feather icons
+            if (window.feather) {
+                feather.replace();
+            }
+            return;
+        }
         
         galleryGrid.innerHTML = imagesToRender.map(img => `
             <div class="gallery-item" onclick="openModal(this)" data-tags="${(img.tags || []).join(',')}" data-filename="${img.filename}">
