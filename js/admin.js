@@ -418,9 +418,19 @@ function loadCurrentImages() {
 function updateMainSiteContent() {
     const content = getSiteContent();
     
-    // This would typically communicate with the main site
-    // For static sites, changes are applied on next page load
-    console.log('Content updated:', content);
+    // Show helpful message to user about refreshing main site
+    const now = new Date().toLocaleTimeString();
+    showAdminResult(`Content saved! Refresh the main site to see changes (saved at ${now})`, true);
+    
+    // Try to update main site if it's in another tab (this won't work due to browser security, but good practice)
+    try {
+        if (window.opener && !window.opener.closed) {
+            window.opener.postMessage({ type: 'contentUpdate', content: content }, '*');
+        }
+    } catch (error) {
+        // Security restrictions prevent cross-tab communication
+        console.log('Content updated locally:', content);
+    }
 }
 
 // Show admin result message

@@ -6,13 +6,13 @@
 }
 
 :root {
-    /* Dark Photography Theme */
-    --primary-dark: #0f0f0f;
-    --secondary-dark: #1a1a1a;
-    --tertiary-dark: #252525;
-    --accent-dark: #333333;
-    --subtle-gray: #1e1e1e;
-    --warm-gray: #2a2a2a;
+    /* Dark Navy Photography Theme */
+    --primary-dark: #0a0e1a;
+    --secondary-dark: #0f1523;
+    --tertiary-dark: #1a2332;
+    --accent-dark: #243142;
+    --subtle-gray: #141b28;
+    --warm-gray: #1f2a3d;
     --highlight-color: rgba(255, 255, 255, 0.05);
     --accent-highlight: rgba(255, 255, 255, 0.1);
     --text-primary: #f0f6fc;
@@ -79,7 +79,7 @@ body {
     position: fixed;
     top: 0;
     width: 100%;
-    background: rgba(15, 15, 15, 0.95);
+    background: rgba(10, 14, 26, 0.95);
     backdrop-filter: blur(15px);
     border-bottom: 1px solid var(--border-color);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
