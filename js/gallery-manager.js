@@ -1,6 +1,20 @@
 // Gallery Manager for Repository-based Images
 // Handles loading images from /img folder and managing their metadata
 
+const GALLERY_CATEGORY_OPTIONS = Object.freeze([
+    { value: 'uncategorized', label: 'Uncategorized' },
+    { value: 'lofi', label: 'Lofi' },
+    { value: 'abstract', label: 'Abstract' },
+    { value: 'portraits', label: 'Portraits' },
+    { value: 'landscape', label: 'Landscape' },
+    { value: 'street', label: 'Street' },
+    { value: 'urbex', label: 'Urbex' }
+]);
+
+if (typeof window !== 'undefined') {
+    window.GALLERY_CATEGORIES = GALLERY_CATEGORY_OPTIONS;
+}
+
 class GalleryManager {
     constructor() {
         this.images = [];
@@ -63,14 +77,20 @@ class GalleryManager {
             // Process each detected image and merge with stored metadata
             this.images = detectedImages.map(img => {
                 const metadata = this.imageMetadata[img.filename] || {};
+                const defaultCategoryCandidate = (img.defaultTags && img.defaultTags[0]) || metadata.category;
+                const categoryDetails = this.resolveCategory(metadata.category, metadata.categoryValue, defaultCategoryCandidate);
+                const baseTags = this.normalizeTags(metadata.tags || img.defaultTags);
+                const tags = this.ensureCategoryTag(baseTags, categoryDetails.value);
+
                 return {
                     id: img.filename,
                     filename: img.filename,
                     url: img.url, // Use the GitHub raw URL directly
                     alt: img.alt,
                     title: metadata.title || img.title,
-                    tags: metadata.tags || img.defaultTags,
-                    category: metadata.category || (img.defaultTags[0] || 'photography'),
+                    tags: tags,
+                    category: categoryDetails.label,
+                    categoryValue: categoryDetails.value,
                     captureDate: img.captureDate
                 };
             });
@@ -105,49 +125,120 @@ class GalleryManager {
         return `https://raw.githubusercontent.com/${config.username}/${config.repository}/refs/heads/${config.branch}/${config.folder}/${filename}`;
     }
 
-    // Load image and extract metadata
-    async loadImageWithMetadata(imageUrl, filename, imageNumber) {
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            
-            img.onload = () => {
-                // Try to extract EXIF data (this is limited in browsers)
-                const captureDate = this.extractDateFromImage(img, filename);
-                const title = captureDate ? this.formatDateTitle(captureDate) : `Image Number: ${imageNumber}`;
-                
-                resolve({
-                    filename: filename,
-                    url: imageUrl, // Store the full GitHub URL
-                    alt: `${title} photograph`,
-                    title: title,
-                    captureDate: captureDate,
-                    defaultTags: this.generateTagsFromFilename(filename),
-                    width: img.naturalWidth,
-                    height: img.naturalHeight
-                });
-            };
-            
-            img.onerror = () => {
-                // If image fails to load, still create entry
-                resolve({
-                    filename: filename,
-                    url: imageUrl,
-                    alt: `Image Number: ${imageNumber} photograph`,
-                    title: `Image Number: ${imageNumber}`,
-                    captureDate: null,
-                    defaultTags: ['photography'],
-                    width: 0,
-                    height: 0
-                });
-            };
-            
-            img.src = imageUrl;
-        });
+    getCategoryOptions() {
+        const shared = window.GALLERY_CATEGORIES;
+        if (Array.isArray(shared) && shared.length > 0) {
+            return shared;
+        }
+        return GALLERY_CATEGORY_OPTIONS;
     }
 
-    // Extract date from image (limited without EXIF library)
-    extractDateFromImage(img, filename) {
+    getDefaultCategory() {
+        const options = this.getCategoryOptions();
+        return options.find(opt => opt.value === 'uncategorized') || options[0];
+    }
+
+    getCategoryOptionByValue(value) {
+        if (!value) return null;
+        const normalized = value.toString().trim().toLowerCase();
+        if (!normalized) return null;
+        const options = this.getCategoryOptions();
+        return options.find(opt => opt.value === normalized) || null;
+    }
+
+    resolveCategory(labelCandidate, valueCandidate, fallbackCandidate) {
+        const candidates = [
+            valueCandidate,
+            labelCandidate,
+            fallbackCandidate
+        ];
+
+        for (const candidate of candidates) {
+            const normalized = this.normalizeCategory(candidate);
+            if (normalized) {
+                return normalized;
+            }
+        }
+
+        const defaultCategory = this.getDefaultCategory();
+        return defaultCategory ? { ...defaultCategory } : { value: 'uncategorized', label: 'Uncategorized' };
+    }
+
+    normalizeCategory(candidate) {
+        if (!candidate) return null;
+        const text = candidate.toString().trim();
+        if (!text) return null;
+
+        const lower = text.toLowerCase();
+        const directOption = this.getCategoryOptionByValue(lower);
+        if (directOption) {
+            return { ...directOption };
+        }
+
+        const labelMatch = this.getCategoryOptions().find(opt => opt.label.toLowerCase() === lower);
+        if (labelMatch) {
+            return { ...labelMatch };
+        }
+
+        return {
+            value: this.slugifyCategory(text),
+            label: this.toTitleCase(text)
+        };
+    }
+
+    normalizeTags(tags) {
+        const normalized = new Set();
+        (tags || []).forEach(tag => {
+            if (!tag && tag !== 0) return;
+            const cleaned = tag.toString().trim().toLowerCase();
+            if (cleaned) {
+                normalized.add(cleaned);
+            }
+        });
+        return Array.from(normalized);
+    }
+
+    ensureCategoryTag(tags, categoryValue) {
+        const normalized = new Set(this.normalizeTags(tags));
+        if (categoryValue) {
+            normalized.add(categoryValue.toString().trim().toLowerCase());
+        }
+        return Array.from(normalized);
+    }
+
+    slugifyCategory(value) {
+        return value
+            .toString()
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '') || 'uncategorized';
+    }
+
+    toTitleCase(text) {
+        return text.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+    }
+
+    // Build metadata for an image without preloading the full asset
+    async loadImageWithMetadata(imageUrl, filename, imageNumber) {
+        const captureDate = this.extractDateFromFilename(filename);
+        const inferredTitle = this.generateTitleFromFilename(filename);
+        const title = captureDate
+            ? this.formatDateTitle(captureDate)
+            : inferredTitle || `Image Number: ${imageNumber}`;
+
+        return {
+            filename: filename,
+            url: imageUrl, // Store the full GitHub URL
+            alt: this.generateAltFromFilename(filename),
+            title: title,
+            captureDate: captureDate,
+            defaultTags: this.generateTagsFromFilename(filename)
+        };
+    }
+
+    // Extract date information from a filename
+    extractDateFromFilename(filename) {
         // Try to extract date from filename patterns
         const datePatterns = [
             /(\d{4})(\d{2})(\d{2})/,  // YYYYMMDD
@@ -207,9 +298,14 @@ class GalleryManager {
             'beach': ['seascape', 'beach'],
             'sunset': ['landscape', 'sunset'],
             'sunrise': ['landscape', 'sunrise'],
+            'lofi': ['lofi'],
+            'abstract': ['abstract'],
+            'street': ['street'],
+            'urbex': ['urbex'],
             'nature': ['nature'],
             'landscape': ['landscape'],
-            'portrait': ['portrait'],
+            'portrait': ['portraits', 'portrait'],
+            'portraits': ['portraits'],
             'photography': ['photography']
         };
 
@@ -231,7 +327,8 @@ class GalleryManager {
             metadata[img.filename] = {
                 title: img.title,
                 tags: img.tags,
-                category: img.category
+                category: img.category,
+                categoryValue: img.categoryValue
             };
         });
         localStorage.setItem('gallery-metadata', JSON.stringify(metadata));
@@ -241,12 +338,28 @@ class GalleryManager {
     // Update image metadata
     updateImageMetadata(filename, updates) {
         const image = this.images.find(img => img.filename === filename);
-        if (image) {
-            Object.assign(image, updates);
-            this.saveMetadata();
-            this.renderGallery();
-            this.setupFilters();
+        if (!image) return;
+
+        const nextTitle = updates.title ? updates.title.trim() : '';
+        if (nextTitle) {
+            image.title = nextTitle;
+            image.alt = `${nextTitle} photograph`;
         }
+
+        const categoryDetails = this.resolveCategory(
+            updates.category || image.category,
+            updates.categoryValue || image.categoryValue,
+            image.categoryValue || image.category
+        );
+        image.category = categoryDetails.label;
+        image.categoryValue = categoryDetails.value;
+
+        const providedTags = Array.isArray(updates.tags) ? updates.tags : image.tags;
+        image.tags = this.ensureCategoryTag(providedTags, image.categoryValue);
+
+        this.saveMetadata();
+        this.renderGallery();
+        this.setupFilters();
     }
 
     // Get all unique tags
@@ -274,6 +387,7 @@ class GalleryManager {
         if (!galleryGrid) return;
 
         const imagesToRender = filteredImages || this.images;
+        const placeholderImage = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
         
         if (imagesToRender.length === 0) {
             galleryGrid.innerHTML = `
@@ -292,11 +406,18 @@ class GalleryManager {
         }
         
         galleryGrid.innerHTML = imagesToRender.map(img => `
-            <div class="gallery-item" onclick="openModal(this)" data-tags="${(img.tags || []).join(',')}" data-filename="${img.filename}">
+            <div class="gallery-item" onclick="openModal(this)" data-tags="${(img.tags || []).join(',')}" data-filename="${img.filename}" data-category="${this.escapeHtml(img.categoryValue || '')}">
                 <div class="item-tags">
                     ${(img.tags || []).map(tag => `<span class="tag-badge">${this.escapeHtml(tag)}</span>`).join('')}
                 </div>
-                <img src="${img.url}" alt="${this.escapeHtml(img.alt)}" loading="lazy">
+                <img 
+                    class="lazy-image"
+                    src="${placeholderImage}"
+                    data-src="${img.url}"
+                    alt="${this.escapeHtml(img.alt)}"
+                    loading="lazy"
+                    decoding="async"
+                    fetchpriority="low">
                 <div class="gallery-overlay">
                     <div class="gallery-info">
                         <h3>${this.escapeHtml(img.title)}</h3>
@@ -309,6 +430,11 @@ class GalleryManager {
         // Re-initialize scroll effects for new items
         if (window.initializeScrollEffects) {
             window.initializeScrollEffects();
+        }
+
+        // Ensure lazy loading observers track the new images
+        if (window.initializeLazyLoading) {
+            window.initializeLazyLoading();
         }
     }
 

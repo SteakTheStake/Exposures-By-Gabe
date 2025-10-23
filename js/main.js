@@ -145,7 +145,8 @@ function openModal(galleryItem) {
     const title = galleryItem.querySelector('h3').textContent;
     const category = galleryItem.querySelector('p').textContent;
     
-    modalImage.src = img.src;
+    const source = img.dataset.src || img.src;
+    modalImage.src = source;
     modalImage.alt = img.alt;
     modalTitle.textContent = title;
     modalCategory.textContent = category;
@@ -217,25 +218,43 @@ function debounce(func, wait, immediate) {
 
 // Handle lazy loading for images
 function initializeLazyLoading() {
-    const images = document.querySelectorAll('img[loading="lazy"]');
+    const images = document.querySelectorAll('img[data-src]');
     
     if ('IntersectionObserver' in window) {
-        const imageObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    img.src = img.dataset.src || img.src;
-                    img.classList.remove('lazy');
-                    imageObserver.unobserve(img);
-                }
+        if (!window.__lazyImageObserver) {
+            window.__lazyImageObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        const source = img.dataset.src;
+                        if (source) {
+                            img.src = source;
+                            img.removeAttribute('data-src');
+                        }
+                        img.dataset.lazyLoaded = 'true';
+                        window.__lazyImageObserver.unobserve(img);
+                    }
+                });
+            }, {
+                rootMargin: '200px 0px',
+                threshold: 0.01
             });
-        });
+        }
         
-        images.forEach(img => imageObserver.observe(img));
+        const observer = window.__lazyImageObserver;
+        images.forEach(img => {
+            if (img.dataset.lazyLoaded === 'true' || img.dataset.lazyInitialized === 'true') return;
+            observer.observe(img);
+            img.dataset.lazyInitialized = 'true';
+        });
     } else {
         // Fallback for browsers without IntersectionObserver
         images.forEach(img => {
-            img.src = img.dataset.src || img.src;
+            if (img.dataset.lazyLoaded === 'true') return;
+            const source = img.dataset.src || img.src;
+            img.src = source;
+            img.removeAttribute('data-src');
+            img.dataset.lazyLoaded = 'true';
         });
     }
 }

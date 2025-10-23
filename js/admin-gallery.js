@@ -28,6 +28,73 @@ class AdminGalleryManager {
         this.setupTagEditor();
     }
 
+    getCategoryOptions() {
+        const categories = window.GALLERY_CATEGORIES;
+        if (Array.isArray(categories) && categories.length > 0) {
+            return categories;
+        }
+        return [
+            { value: 'uncategorized', label: 'Uncategorized' },
+            { value: 'lofi', label: 'Lofi' },
+            { value: 'abstract', label: 'Abstract' },
+            { value: 'portraits', label: 'Portraits' },
+            { value: 'landscape', label: 'Landscape' },
+            { value: 'street', label: 'Street' },
+            { value: 'urbex', label: 'Urbex' }
+        ];
+    }
+
+    getDefaultCategoryValue() {
+        const options = this.getCategoryOptions();
+        return options.find(opt => opt.value === 'uncategorized')?.value || (options[0]?.value || 'uncategorized');
+    }
+
+    normalizeCategoryValue(value) {
+        if (!value) return this.getDefaultCategoryValue();
+        return value
+            .toString()
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '') || this.getDefaultCategoryValue();
+    }
+
+    getCategoryOptionByValue(value) {
+        if (!value) return null;
+        const normalized = value.toString().trim().toLowerCase();
+        return this.getCategoryOptions().find(opt => opt.value === normalized) || null;
+    }
+
+    getCategoryOptionsHtml(selectedValue) {
+        const value = selectedValue || this.getDefaultCategoryValue();
+        const options = this.getCategoryOptions();
+        const optionsHtml = options
+            .map(opt => `
+                <option value="${this.escapeHtml(opt.value)}"${opt.value === value ? ' selected' : ''}>
+                    ${this.escapeHtml(opt.label)}
+                </option>
+            `).join('');
+
+        const hasSelected = options.some(opt => opt.value === value);
+        if (!hasSelected && value) {
+            return optionsHtml + `
+                <option value="${this.escapeHtml(value)}" selected>
+                    ${this.escapeHtml(this.formatCategoryLabel(value))}
+                </option>
+            `;
+        }
+
+        return optionsHtml;
+    }
+
+    formatCategoryLabel(value) {
+        if (!value) return 'Uncategorized';
+        return value
+            .toString()
+            .replace(/[-_]+/g, ' ')
+            .replace(/\b\w/g, char => char.toUpperCase());
+    }
+
     // Render image management interface
     renderImageManagement() {
         const container = document.getElementById('imageManagementSection');
@@ -46,6 +113,7 @@ class AdminGalleryManager {
                         </div>
                         <div class="image-info">
                             <p><strong>Filename:</strong> ${img.filename}</p>
+                            <p><strong>Category:</strong> ${this.escapeHtml(img.category || 'Uncategorized')}</p>
                             <p><strong>Tags:</strong> ${(img.tags || []).join(', ') || 'None'}</p>
                         </div>
                         <button onclick="window.adminGalleryManager.editImage('${img.filename}')" class="admin-btn">
@@ -81,7 +149,9 @@ class AdminGalleryManager {
                 
                 <div class="form-group">
                     <label for="imageCategory">Category</label>
-                    <input type="text" id="imageCategory" class="admin-input" placeholder="Enter category">
+                    <select id="imageCategory" class="admin-input">
+                        ${this.getCategoryOptionsHtml()}
+                    </select>
                 </div>
                 
                 <div class="form-group">
@@ -124,7 +194,9 @@ class AdminGalleryManager {
             preview.innerHTML = `<img src="${image.url}" alt="${this.escapeHtml(image.alt)}" style="width: 200px; height: 150px; object-fit: cover; border-radius: 8px;">`;
             
             titleInput.value = image.title;
-            categoryInput.value = image.category || '';
+            const selectedCategory = this.normalizeCategoryValue(image.categoryValue || image.category);
+            categoryInput.innerHTML = this.getCategoryOptionsHtml(selectedCategory);
+            categoryInput.value = selectedCategory;
             tagsInput.value = (image.tags || []).join(', ');
 
             // Scroll to editor
@@ -147,9 +219,13 @@ class AdminGalleryManager {
 
         if (!titleInput || !categoryInput || !tagsInput) return;
 
+        const categoryValue = this.normalizeCategoryValue(categoryInput.value || this.getDefaultCategoryValue());
+        const categoryOption = this.getCategoryOptionByValue(categoryValue);
+
         const updates = {
             title: titleInput.value.trim() || this.currentImage.title,
-            category: categoryInput.value.trim() || 'uncategorized',
+            category: categoryOption ? categoryOption.label : this.formatCategoryLabel(categoryValue),
+            categoryValue: categoryOption ? categoryOption.value : categoryValue,
             tags: tagsInput.value.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag.length > 0)
         };
 
