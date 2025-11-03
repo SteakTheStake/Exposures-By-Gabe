@@ -45,15 +45,108 @@
 
     <!-- Admin Interface -->
     <div id="adminInterface" class="upload-interface">
-        <div class="container">
-            <h2 class="section-title">Site Content Management</h2>
-            
+        <div class="container admin-dashboard">
+            <header class="admin-header">
+                <div class="admin-header-text">
+                    <p class="admin-kicker">Dashboard</p>
+                    <h2 class="section-title">Site Content Management</h2>
+                    <p class="admin-subtitle">
+                        Update copy, brand assets, and gallery metadata with responsive tools tuned for desktops, tablets, and phones.
+                    </p>
+                </div>
+                <div class="admin-header-actions">
+                    <button id="refreshGalleryButton" class="admin-btn secondary" type="button">
+                        <i data-feather="refresh-cw"></i>
+                        <span>Sync Gallery</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Overview -->
+            <section class="admin-overview subtle-bg elegant-shadow">
+                <div class="admin-stats-grid" id="dashboardStats">
+                    <article class="admin-stat-card">
+                        <div class="stat-icon">
+                            <i data-feather="image"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Images</span>
+                            <span class="stat-value" data-metric="total-images">0</span>
+                            <span class="stat-meta" data-metric="filtered-summary">All images</span>
+                        </div>
+                    </article>
+                    <article class="admin-stat-card">
+                        <div class="stat-icon">
+                            <i data-feather="layers"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Categories</span>
+                            <span class="stat-value" data-metric="unique-categories">0</span>
+                            <span class="stat-meta">in use</span>
+                        </div>
+                    </article>
+                    <article class="admin-stat-card">
+                        <div class="stat-icon">
+                            <i data-feather="tag"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Unique Tags</span>
+                            <span class="stat-value" data-metric="unique-tags">0</span>
+                            <span class="stat-meta">across gallery</span>
+                        </div>
+                    </article>
+                    <article class="admin-stat-card">
+                        <div class="stat-icon">
+                            <i data-feather="alert-triangle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Needs Tags</span>
+                            <span class="stat-value" data-metric="untagged-images">0</span>
+                            <span class="stat-meta">images without rich tags</span>
+                        </div>
+                    </article>
+                </div>
+                <footer class="admin-overview-footer">
+                    <span class="footer-label">Last synced</span>
+                    <span class="footer-value" data-metric="last-sync">--</span>
+                </footer>
+            </section>
+
+            <!-- Management Toolbar -->
+            <section class="admin-section admin-toolbox">
+                <div class="admin-toolbar subtle-bg elegant-shadow">
+                    <div class="toolbar-group toolbar-search">
+                        <label class="sr-only" for="imageSearchInput">Search gallery images</label>
+                        <div class="input-with-icon">
+                            <i data-feather="search"></i>
+                            <input type="search" id="imageSearchInput" class="admin-input" placeholder="Search by title, filename, or tag">
+                        </div>
+                    </div>
+                    <div class="toolbar-group toolbar-select">
+                        <label for="categoryFilterSelect">Category</label>
+                        <select id="categoryFilterSelect" class="admin-input">
+                            <option value="all">All categories</option>
+                        </select>
+                    </div>
+                    <div class="toolbar-actions">
+                        <button id="clearFiltersButton" class="admin-btn ghost" type="button">
+                            <i data-feather="x-circle"></i>
+                            <span>Clear Filters</span>
+                        </button>
+                    </div>
+                </div>
+                <p id="imageListSummary" class="toolbar-meta">Showing 0 images</p>
+            </section>
+
             <!-- Content Editing Section -->
-            <div class="admin-section">
+            <section class="admin-section">
                 <h3>Site Text Content</h3>
                 <div class="admin-grid">
-                    <div class="admin-card subtle-bg elegant-shadow">
-                        <h4>Hero Section</h4>
+                    <article class="admin-card subtle-bg elegant-shadow">
+                        <header class="admin-card-header">
+                            <h4>Hero Section</h4>
+                            <p class="admin-card-subtitle">Control the headline and introduction shown on the home page hero.</p>
+                        </header>
                         <div class="form-group">
                             <label for="heroTitle">Main Title</label>
                             <input type="text" id="heroTitle" placeholder="Capturing Moments" class="admin-input">
@@ -62,11 +155,17 @@
                             <label for="heroSubtitle">Subtitle</label>
                             <textarea id="heroSubtitle" rows="3" placeholder="A curated collection of photography..." class="admin-input"></textarea>
                         </div>
-                        <button onclick="updateHeroContent()" class="admin-btn">Update Hero</button>
-                    </div>
+                        <button onclick="updateHeroContent()" class="admin-btn" type="button">
+                            <i data-feather="save"></i>
+                            <span>Update Hero</span>
+                        </button>
+                    </article>
                     
-                    <div class="admin-card subtle-bg elegant-shadow">
-                        <h4>About Section</h4>
+                    <article class="admin-card subtle-bg elegant-shadow">
+                        <header class="admin-card-header">
+                            <h4>About Section</h4>
+                            <p class="admin-card-subtitle">Edit the story that introduces the portfolio and philosophy.</p>
+                        </header>
                         <div class="form-group">
                             <label for="aboutText1">About Paragraph 1</label>
                             <textarea id="aboutText1" rows="4" placeholder="Welcome to my photography portfolio..." class="admin-input"></textarea>
@@ -75,11 +174,17 @@
                             <label for="aboutText2">About Paragraph 2</label>
                             <textarea id="aboutText2" rows="4" placeholder="My work focuses on..." class="admin-input"></textarea>
                         </div>
-                        <button onclick="updateAboutContent()" class="admin-btn">Update About</button>
-                    </div>
+                        <button onclick="updateAboutContent()" class="admin-btn" type="button">
+                            <i data-feather="save"></i>
+                            <span>Update About</span>
+                        </button>
+                    </article>
                     
-                    <div class="admin-card subtle-bg elegant-shadow">
-                        <h4>Contact Information</h4>
+                    <article class="admin-card subtle-bg elegant-shadow">
+                        <header class="admin-card-header">
+                            <h4>Contact Information</h4>
+                            <p class="admin-card-subtitle">Keep commission availability and social handles current.</p>
+                        </header>
                         <div class="form-group">
                             <label for="contactInstagram">Instagram Handle</label>
                             <input type="text" id="contactInstagram" placeholder="@gabe_corr" class="admin-input">
@@ -88,27 +193,73 @@
                             <label for="contactStatus">Availability Status</label>
                             <input type="text" id="contactStatus" placeholder="Available for commissions" class="admin-input">
                         </div>
-                        <button onclick="updateContactContent()" class="admin-btn">Update Contact</button>
-                    </div>
+                        <button onclick="updateContactContent()" class="admin-btn" type="button">
+                            <i data-feather="save"></i>
+                            <span>Update Contact</span>
+                        </button>
+                    </article>
                 </div>
-            </div>
+            </section>
+
+            <!-- Brand Assets Section -->
+            <section class="admin-section">
+                <h3>Brand Assets</h3>
+                <div class="admin-grid">
+                    <article class="admin-card subtle-bg elegant-shadow">
+                        <header class="admin-card-header">
+                            <h4>Site Logo</h4>
+                            <p class="admin-card-subtitle">Upload a logo to display on marketing pages and exports.</p>
+                        </header>
+                        <div class="brand-preview" id="currentLogo">
+                            <div class="brand-placeholder">
+                                <i data-feather="image"></i>
+                                <span>No logo uploaded yet</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="logoUpload">Upload New Logo</label>
+                            <input type="file" id="logoUpload" class="admin-input" accept="image/*" onchange="handleLogoUpload(event)">
+                            <p class="input-help">PNG or SVG preferred - Max 5MB</p>
+                        </div>
+                    </article>
+
+                    <article class="admin-card subtle-bg elegant-shadow">
+                        <header class="admin-card-header">
+                            <h4>Portrait</h4>
+                            <p class="admin-card-subtitle">Set the portrait used in about sections or press kits.</p>
+                        </header>
+                        <div class="brand-preview" id="currentPortrait">
+                            <div class="brand-placeholder">
+                                <i data-feather="user"></i>
+                                <span>No portrait uploaded yet</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="portraitUpload">Upload New Portrait</label>
+                            <input type="file" id="portraitUpload" class="admin-input" accept="image/*" onchange="handlePortraitUpload(event)">
+                            <p class="input-help">JPG or PNG - Max 5MB</p>
+                        </div>
+                    </article>
+                </div>
+            </section>
 
             <!-- Gallery Management Section -->
-            <div class="admin-section" id="gallery-management">
+            <section class="admin-section" id="gallery-management">
+                <h3>Gallery Management</h3>
                 <div id="imageManagementSection">
                     <!-- Gallery images will be populated by admin-gallery.js -->
                 </div>
-            </div>
+            </section>
 
             <!-- Tag Editor Section -->
-            <div class="admin-section">
+            <section class="admin-section" aria-live="polite" aria-atomic="true">
                 <div id="tagEditorSection">
                     <!-- Tag editor will be populated by admin-gallery.js -->
                 </div>
-            </div>
+            </section>
 
             <!-- Results and Status -->
-            <div id="adminResults" class="upload-results"></div>
+            <div id="adminResults" class="upload-results" aria-live="polite" aria-atomic="true"></div>
         </div>
     </div>
 

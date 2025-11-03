@@ -94,10 +94,11 @@ class GalleryManager {
                     captureDate: img.captureDate
                 };
             });
-
         } catch (error) {
             console.error('Error loading images from repository:', error);
             this.images = [];
+        } finally {
+            this.notifyGalleryUpdated();
         }
     }
 
@@ -436,6 +437,7 @@ class GalleryManager {
         this.saveMetadata();
         this.renderGallery();
         this.setupFilters();
+        this.notifyGalleryUpdated();
     }
 
     // Get all unique tags
@@ -569,6 +571,24 @@ class GalleryManager {
     // Get all images for admin
     getAllImages() {
         return this.images;
+    }
+
+    notifyGalleryUpdated() {
+        if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') {
+            return;
+        }
+        if (typeof CustomEvent !== 'function') {
+            return;
+        }
+        try {
+            window.dispatchEvent(new CustomEvent('gallery:updated', {
+                detail: {
+                    images: this.images
+                }
+            }));
+        } catch (error) {
+            console.error('Failed to dispatch gallery update event:', error);
+        }
     }
 }
 

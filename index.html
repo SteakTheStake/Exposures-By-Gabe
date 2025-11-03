@@ -19,6 +19,7 @@
             <h1 class="nav-title">Exposures By Gabe</h1>
             <div class="nav-links">
                 <a href="#home" class="nav-link active">Home</a>
+                <a href="#collections" class="nav-link">Collections</a>
                 <a href="#gallery" class="nav-link">Gallery</a>
                 <a href="#about" class="nav-link">About</a>
                 <a href="#contact" class="nav-link">Contact</a>
@@ -32,12 +33,115 @@
     <!-- Hero Section -->
     <section id="home" class="hero">
         <div class="hero-container">
-            <div class="hero-content">
-                <h1 class="hero-title">Exposures By Gabe</h1>
-                <p class="hero-subtitle">Capturing life's extraordinary moments through the art of photography. Welcome to my creative journey.</p>
-                <button class="cta-button" onclick="scrollToGallery()">
-                    <span>View Gallery</span>
-                    <i data-feather="arrow-down"></i>
+            <div class="hero-grid">
+                <div class="hero-content">
+                    <div class="hero-badge">
+                        <span>Fine art photography</span>
+                        <span class="badge-divider"></span>
+                        <span>Portfolio & commissions</span>
+                    </div>
+                    <h1 class="hero-title">Exposures By Gabe</h1>
+                    <p class="hero-subtitle">Capturing cinematic light, moody textures, and the stories hidden in everyday spaces. Step into a gallery curated for wanderers and adventurous brands alike.</p>
+                    <div class="hero-actions">
+                        <button class="cta-button" onclick="scrollToGallery()">
+                            <span>View Gallery</span>
+                            <i data-feather="arrow-down"></i>
+                        </button>
+                        <a class="cta-button outline" href="#contact">
+                            <span>Book a Session</span>
+                            <i data-feather="calendar"></i>
+                        </a>
+                    </div>
+                    <div class="hero-meta">
+                        <div class="hero-stat">
+                            <span class="hero-stat-number" data-hero-metric="images">0</span>
+                            <span class="hero-stat-label">curated images</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-number" data-hero-metric="categories">0</span>
+                            <span class="hero-stat-label">distinct styles</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-number" data-hero-metric="tags">0</span>
+                            <span class="hero-stat-label">unique tags</span>
+                        </div>
+                    </div>
+                    <div class="hero-highlight">
+                        <span class="hero-highlight-label">Spotlight collection</span>
+                        <button type="button" class="hero-highlight-pill" data-hero-highlight-button data-tag="landscape" onclick="navigateToTag(this.dataset.tag || 'landscape')">
+                            <span class="hero-highlight-name" data-hero-highlight>&mdash;</span>
+                            <span class="hero-highlight-meta"><span data-hero-highlight-count>0</span> images</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="hero-visual subtle-bg elegant-shadow">
+                    <div class="hero-visual-header">
+                        <p>Jump into a mood</p>
+                        <div class="hero-visual-actions">
+                            <button type="button" class="hero-pill" onclick="navigateToTag('landscape')">Landscape</button>
+                            <button type="button" class="hero-pill" onclick="navigateToTag('urbex')">Urbex</button>
+                            <button type="button" class="hero-pill" onclick="navigateToTag('portraits')">Portraits</button>
+                        </div>
+                    </div>
+                    <div class="hero-visual-grid" id="heroPreview" aria-live="polite" aria-label="Featured gallery preview">
+                        <div class="preview-placeholder">
+                            <i data-feather="grid"></i>
+                            <p>Gallery previews appear once images finish loading.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Collections -->
+    <section id="collections" class="featured-section">
+        <div class="container">
+            <div class="section-heading">
+                <p class="section-kicker">Featured Collections</p>
+                <h2 class="section-title">Curated journeys through light</h2>
+                <p class="section-subtitle">Skip the scroll and explore by atmosphere. Each collection opens a focused edit of the gallery.</p>
+            </div>
+            <div class="featured-grid">
+                <button type="button" class="collection-card subtle-bg elegant-shadow" data-collection-tag="landscape">
+                    <div class="collection-card-body">
+                        <h3>Landscapes</h3>
+                        <p>Expansive vistas, dramatic horizons, and tranquil dawns crafted for print and environmental campaigns.</p>
+                    </div>
+                    <div class="collection-card-meta">
+                        <span class="collection-count" data-collection-count="landscape">0</span>
+                        <span class="collection-label">images</span>
+                    </div>
+                </button>
+                <button type="button" class="collection-card subtle-bg elegant-shadow" data-collection-tag="urbex">
+                    <div class="collection-card-body">
+                        <h3>Urbex</h3>
+                        <p>Forgotten industry, neon ambience, and urban decay--perfect for moody editorials and cinematic art direction.</p>
+                    </div>
+                    <div class="collection-card-meta">
+                        <span class="collection-count" data-collection-count="urbex">0</span>
+                        <span class="collection-label">images</span>
+                    </div>
+                </button>
+                <button type="button" class="collection-card subtle-bg elegant-shadow" data-collection-tag="portraits">
+                    <div class="collection-card-body">
+                        <h3>Portraits</h3>
+                        <p>Character-driven sessions with a focus on natural light, texture, and narrative styling.</p>
+                    </div>
+                    <div class="collection-card-meta">
+                        <span class="collection-count" data-collection-count="portraits">0</span>
+                        <span class="collection-label">images</span>
+                    </div>
+                </button>
+                <button type="button" class="collection-card subtle-bg elegant-shadow" data-collection-tag="abstract">
+                    <div class="collection-card-body">
+                        <h3>Abstract</h3>
+                        <p>Bold color stories, geometric studies, and experimental compositions for album art and brand visuals.</p>
+                    </div>
+                    <div class="collection-card-meta">
+                        <span class="collection-count" data-collection-count="abstract">0</span>
+                        <span class="collection-label">images</span>
+                    </div>
                 </button>
             </div>
         </div>
@@ -46,7 +150,11 @@
     <!-- Gallery Section -->
     <section id="gallery" class="gallery-section">
         <div class="container">
-            <h2 class="section-title">Gallery</h2>
+            <div class="section-heading">
+                <p class="section-kicker">Gallery</p>
+                <h2 class="section-title">Explore the portfolio</h2>
+                <p class="section-subtitle">Use the adaptive filters to discover new perspectives. Every image links back to its original repository source.</p>
+            </div>
             
             <!-- Gallery Filters -->
             <div class="gallery-filters subtle-bg elegant-shadow">
@@ -71,16 +179,40 @@
         <div class="container">
             <div class="about-content">
                 <div class="about-text">
-                    <h2 class="section-title">About</h2>
+                    <p class="section-kicker">About</p>
+                    <h2 class="section-title">Narratives in ambient light</h2>
                     <p class="about-description">
                         Welcome to Exposures By Gabe. I'm passionate about capturing the beauty of the natural world 
                         and sharing moments that inspire and move people. Each photograph tells a story, whether it's the 
                         serene tranquility of a mountain landscape or the dynamic energy of ocean waves.
                     </p>
                     <p class="about-description">
-                        My work focuses on landscape and nature photography, always seeking to find the extraordinary 
-                        in the ordinary and to showcase the incredible diversity and beauty of our planet.
+                        My work focuses on landscape, urbex, and portrait photography--always seeking to find the extraordinary 
+                        in the ordinary and to showcase the incredible diversity of our planet's textures and moods.
                     </p>
+                    <div class="about-highlights">
+                        <div class="about-highlight">
+                            <i data-feather="map"></i>
+                            <div>
+                                <h4>Location scouting</h4>
+                                <p>Remote peaks, industrial relics, hidden coastlines--scouted and documented ahead of your shoot.</p>
+                            </div>
+                        </div>
+                        <div class="about-highlight">
+                            <i data-feather="aperture"></i>
+                            <div>
+                                <h4>Art direction</h4>
+                                <p>Styling, mood boards, and lighting designed to match your brand story or campaign concept.</p>
+                            </div>
+                        </div>
+                        <div class="about-highlight">
+                            <i data-feather="clock"></i>
+                            <div>
+                                <h4>End-to-end delivery</h4>
+                                <p>Handled with professional grade post-processing, proofing galleries, and print-ready exports.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="about-image">
                     <div class="about-placeholder">
@@ -92,12 +224,66 @@
         </div>
     </section>
 
+    <!-- Process Section -->
+    <section class="process-section">
+        <div class="container">
+            <div class="section-heading">
+                <p class="section-kicker">Workflow</p>
+                <h2 class="section-title">From concept to delivery</h2>
+                <p class="section-subtitle">A collaborative journey built around your narrative, timeline, and vision.</p>
+            </div>
+            <div class="process-grid">
+                <article class="process-card subtle-bg elegant-shadow">
+                    <span class="process-step">01</span>
+                    <h3>Discover</h3>
+                    <p>We align on mood boards, desired locations, and the emotional tone of your project.</p>
+                </article>
+                <article class="process-card subtle-bg elegant-shadow">
+                    <span class="process-step">02</span>
+                    <h3>Create</h3>
+                    <p>On-location shooting with adaptive lighting, guided posing, and cinematic composition.</p>
+                </article>
+                <article class="process-card subtle-bg elegant-shadow">
+                    <span class="process-step">03</span>
+                    <h3>Deliver</h3>
+                    <p>Curated selections, polished edits, and exports optimized for web, print, and campaign use.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Collaboration CTA -->
+    <section class="cta-section" id="projects">
+        <div class="container">
+            <div class="cta-card subtle-bg elegant-shadow">
+                <div class="cta-text">
+                    <h2>Ready to craft your next story?</h2>
+                    <p>Whether you need atmospheric album artwork, a cinematic campaign, or intimate portraits, let's build it together.</p>
+                </div>
+                <div class="cta-actions">
+                    <a href="#contact" class="cta-button">
+                        <span>Start a Project</span>
+                        <i data-feather="arrow-right"></i>
+                    </a>
+                    <a href="https://instagram.com/gabe_corr" target="_blank" rel="noopener" class="cta-button outline">
+                        <span>Follow on Instagram</span>
+                        <i data-feather="instagram"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Contact Section -->
     <section id="contact" class="contact-section">
         <div class="container">
-            <h2 class="section-title">Contact</h2>
-            <div class="contact-content">
-                <div class="contact-info">
+            <div class="section-heading">
+                <p class="section-kicker">Contact</p>
+                <h2 class="section-title">Let's collaborate</h2>
+                <p class="section-subtitle">Share your vision and we'll design a shoot tailored to your story, location, and audience.</p>
+            </div>
+            <div class="contact-grid">
+                <div class="contact-card subtle-bg elegant-shadow">
                     <div class="contact-item">
                         <i data-feather="instagram"></i>
                         <span>@gabe_corr</span>
@@ -106,6 +292,22 @@
                         <i data-feather="globe"></i>
                         <span>Available for commissions</span>
                     </div>
+                    <p class="contact-note">Send a DM on Instagram or use the prompt to draft your inquiry. Expect a personal response within 48 hours.</p>
+                </div>
+                <div class="contact-card subtle-bg elegant-shadow">
+                    <h3 class="contact-form-title">Project Inquiry Prompt</h3>
+                    <form class="contact-form" onsubmit="return false;">
+                        <div class="form-row">
+                            <input type="text" placeholder="Your name" aria-label="Your name">
+                            <input type="text" placeholder="Email or social handle" aria-label="Email or social handle">
+                        </div>
+                        <textarea rows="4" placeholder="Tell me about the story you want to capture" aria-label="Project details"></textarea>
+                        <p class="contact-note small">This prompt helps draft your message. The button below opens your email client with the details.</p>
+                        <a href="mailto:?subject=Project%20Inquiry%20-%20Exposures%20By%20Gabe" class="cta-button outline contact-mail">
+                            <span>Draft email</span>
+                            <i data-feather="mail"></i>
+                        </a>
+                    </form>
                 </div>
             </div>
         </div>

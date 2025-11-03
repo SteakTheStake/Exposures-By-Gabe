@@ -1,10 +1,16 @@
-// Admin Gallery Management for Repository Images
+﻿// Admin Gallery Management for Repository Images
 // Handles tagging and metadata editing for images in the /img folder
 
 class AdminGalleryManager {
     constructor() {
         this.galleryManager = null;
         this.currentImage = null;
+        this.filters = {
+            search: '',
+            category: 'all'
+        };
+        this.lastSync = new Date();
+        this.searchDebounce = null;
         this.init();
     }
 
@@ -24,6 +30,10 @@ class AdminGalleryManager {
 
     // Setup the admin interface
     setupAdminInterface() {
+        this.lastSync = new Date();
+        this.populateCategoryFilter();
+        this.bindToolbarControls();
+        this.renderOverviewStats();
         this.renderImageManagement();
         this.setupTagEditor();
     }
@@ -95,35 +105,305 @@ class AdminGalleryManager {
             .replace(/\b\w/g, char => char.toUpperCase());
     }
 
+    bindToolbarControls() {
+        const searchInput = document.getElementById('imageSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', (event) => {
+                const value = event.target.value.toLowerCase();
+                clearTimeout(this.searchDebounce);
+                this.searchDebounce = setTimeout(() => {
+                    this.filters.search = value.trim();
+                    this.renderImageManagement();
+                }, 150);
+            });
+        }
+
+        const categorySelect = document.getElementById('categoryFilterSelect');
+        if (categorySelect) {
+            categorySelect.addEventListener('change', (event) => {
+                const selected = event.target.value;
+                this.filters.category = selected === 'all'
+                    ? 'all'
+                    : this.normalizeCategoryValue(selected);
+                this.renderImageManagement();
+            });
+        }
+
+        const clearFiltersButton = document.getElementById('clearFiltersButton');
+        if (clearFiltersButton) {
+            clearFiltersButton.addEventListener('click', () => {
+                this.resetFilters();
+            });
+        }
+
+        const refreshButton = document.getElementById('refreshGalleryButton');
+        if (refreshButton) {
+            refreshButton.addEventListener('click', async () => {
+                if (!this.galleryManager) return;
+                const originalHtml = refreshButton.innerHTML;
+                refreshButton.disabled = true;
+                refreshButton.classList.add('is-loading');
+                refreshButton.setAttribute('aria-busy', 'true');
+                refreshButton.innerHTML = `
+                    <i data-feather="loader" class="icon-spin"></i>
+                    <span>Syncing...</span>
+                `;
+                if (window.feather) {
+                    feather.replace();
+                }
+
+                try {
+                    await this.galleryManager.refreshGallery();
+                    this.lastSync = new Date();
+                    this.populateCategoryFilter();
+                    this.renderOverviewStats();
+                    this.renderImageManagement();
+                    this.showMessage('Gallery refreshed successfully.', 'success');
+                } catch (error) {
+                    console.error('Failed to refresh gallery:', error);
+                    this.showMessage('Unable to refresh gallery. Please try again.', 'error');
+                } finally {
+                    refreshButton.disabled = false;
+                    refreshButton.classList.remove('is-loading');
+                    refreshButton.removeAttribute('aria-busy');
+                    refreshButton.innerHTML = originalHtml;
+                    if (window.feather) {
+                        feather.replace();
+                    }
+                }
+            });
+        }
+    }
+
+    resetFilters() {
+        this.filters = { search: '', category: 'all' };
+
+        const searchInput = document.getElementById('imageSearchInput');
+        if (searchInput) {
+            searchInput.value = '';
+        }
+
+        const categorySelect = document.getElementById('categoryFilterSelect');
+        if (categorySelect) {
+            categorySelect.value = 'all';
+        }
+
+        this.renderImageManagement();
+    }
+
+    populateCategoryFilter() {
+        const select = document.getElementById('categoryFilterSelect');
+        if (!select) return;
+
+        const options = this.getCategoryOptions();
+        const uniqueValues = new Set(options.map(opt => opt.value));
+
+        const currentValue = this.filters.category;
+        const optionsHtml = [
+            '<option value="all">All categories</option>',
+            ...options.map(opt => `<option value="${this.escapeHtml(opt.value)}">${this.escapeHtml(opt.label)}</option>`)
+        ];
+
+        if (currentValue !== 'all' && !uniqueValues.has(currentValue)) {
+            optionsHtml.push(`<option value="${this.escapeHtml(currentValue)}">${this.escapeHtml(this.formatCategoryLabel(currentValue))}</option>`);
+        }
+
+        select.innerHTML = optionsHtml.join('');
+        select.value = currentValue;
+    }
+
+    applyFilters(images) {
+        const searchTerm = this.filters.search;
+        const selectedCategory = this.filters.category;
+
+        return images.filter(image => {
+            const normalizedCategory = this.normalizeCategoryValue(image.categoryValue || image.category);
+            if (selectedCategory !== 'all' && normalizedCategory !== selectedCategory) {
+                return false;
+            }
+
+            if (searchTerm) {
+                const haystack = [
+                    image.title,
+                    image.filename,
+                    ...(image.tags || [])
+                ].join(' ').toLowerCase();
+
+                if (!haystack.includes(searchTerm)) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }
+
+    renderOverviewStats() {
+        if (!this.galleryManager) return;
+
+        const images = this.galleryManager.getAllImages();
+        const stats = this.calculateStats(images);
+
+        const totalImagesElement = document.querySelector('[data-metric="total-images"]');
+        if (totalImagesElement) {
+            totalImagesElement.textContent = stats.totalImages;
+        }
+
+        const filteredSummaryElement = document.querySelector('[data-metric="filtered-summary"]');
+        if (filteredSummaryElement) {
+            filteredSummaryElement.textContent = stats.filteredSummary;
+        }
+
+        const uniqueCategoriesElement = document.querySelector('[data-metric="unique-categories"]');
+        if (uniqueCategoriesElement) {
+            uniqueCategoriesElement.textContent = stats.uniqueCategories;
+        }
+
+        const uniqueTagsElement = document.querySelector('[data-metric="unique-tags"]');
+        if (uniqueTagsElement) {
+            uniqueTagsElement.textContent = stats.uniqueTags;
+        }
+
+        const untaggedElement = document.querySelector('[data-metric="untagged-images"]');
+        if (untaggedElement) {
+            untaggedElement.textContent = stats.untaggedImages;
+        }
+
+        const lastSyncElement = document.querySelector('[data-metric="last-sync"]');
+        if (lastSyncElement) {
+            lastSyncElement.textContent = this.formatTimestamp(this.lastSync);
+        }
+    }
+
+    calculateStats(images) {
+        const totalImages = images.length;
+        const categorySet = new Set();
+        const tagSet = new Set();
+        let untaggedImages = 0;
+
+        images.forEach(image => {
+            const categoryValue = this.normalizeCategoryValue(image.categoryValue || image.category);
+            if (categoryValue) {
+                categorySet.add(categoryValue);
+            }
+
+            const tags = Array.isArray(image.tags) ? image.tags : [];
+            if (tags.length === 0 || (tags.length === 1 && tags[0] === 'photography')) {
+                untaggedImages += 1;
+            }
+
+            tags.forEach(tag => {
+                if (tag) {
+                    tagSet.add(tag.toLowerCase());
+                }
+            });
+        });
+
+        const filteredImages = this.applyFilters(images);
+        let filteredSummary = `${filteredImages.length} of ${totalImages}`;
+        if (totalImages === 0) {
+            filteredSummary = 'No images';
+        } else if (filteredImages.length === totalImages) {
+            filteredSummary = 'All images';
+        }
+
+        return {
+            totalImages,
+            uniqueCategories: categorySet.size,
+            uniqueTags: tagSet.size,
+            untaggedImages,
+            filteredSummary
+        };
+    }
+
+    updateImageSummary(total, filtered) {
+        const summaryElement = document.getElementById('imageListSummary');
+        if (summaryElement) {
+            if (total === 0) {
+                summaryElement.textContent = 'No images detected in the gallery.';
+            } else if (filtered === total) {
+                summaryElement.textContent = `Showing all ${total} images`;
+            } else {
+                summaryElement.textContent = `Showing ${filtered} of ${total} images`;
+            }
+        }
+
+        const filteredSummaryElement = document.querySelector('[data-metric="filtered-summary"]');
+        if (filteredSummaryElement) {
+            if (total === 0) {
+                filteredSummaryElement.textContent = 'No images';
+            } else if (filtered === total) {
+                filteredSummaryElement.textContent = 'All images';
+            } else {
+                filteredSummaryElement.textContent = `${filtered} of ${total}`;
+            }
+        }
+    }
+
+    formatTimestamp(timestamp) {
+        if (!(timestamp instanceof Date)) {
+            return '--';
+        }
+        return new Intl.DateTimeFormat('en-US', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+        }).format(timestamp);
+    }
+    formatTagList(tags) {
+        if (!Array.isArray(tags) || tags.length === 0) {
+            return 'None';
+        }
+        return tags
+            .map(tag => this.escapeHtml(tag))
+            .join(', ');
+    }
+
     // Render image management interface
     renderImageManagement() {
         const container = document.getElementById('imageManagementSection');
         if (!container) return;
 
         const images = this.galleryManager.getAllImages();
-        
-        container.innerHTML = `
-            <h3>Gallery Images</h3>
-            <div class="admin-grid">
-                ${images.map(img => `
-                    <div class="admin-card subtle-bg elegant-shadow">
-                        <h4>${this.escapeHtml(img.title)}</h4>
-                        <div class="image-preview">
-                            <img src="${img.url}" alt="${this.escapeHtml(img.alt)}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px;">
-                        </div>
-                        <div class="image-info">
-                            <p><strong>Filename:</strong> ${img.filename}</p>
-                            <p><strong>Category:</strong> ${this.escapeHtml(img.category || 'Uncategorized')}</p>
-                            <p><strong>Tags:</strong> ${(img.tags || []).join(', ') || 'None'}</p>
-                        </div>
-                        <button onclick="window.adminGalleryManager.editImage('${img.filename}')" class="admin-btn">
-                            <i data-feather="edit"></i>
-                            Edit Image
-                        </button>
+        const filteredImages = this.applyFilters(images);
+        this.updateImageSummary(images.length, filteredImages.length);
+
+        if (filteredImages.length === 0) {
+            container.innerHTML = `
+                <div class="admin-empty-state subtle-bg elegant-shadow">
+                    <div class="empty-icon">
+                        <i data-feather="inbox"></i>
                     </div>
-                `).join('')}
-            </div>
-        `;
+                    <h4>No images match the current filters</h4>
+                    <p>Try adjusting the search or category filter to see gallery items.</p>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="admin-grid admin-image-grid">
+                    ${filteredImages.map(img => `
+                        <article class="admin-card subtle-bg elegant-shadow admin-image-card">
+                            <div class="image-preview">
+                                <img src="${this.escapeHtml(img.url)}" alt="${this.escapeHtml(img.alt)}" loading="lazy">
+                            </div>
+                            <div class="image-info">
+                                <h4 class="image-title">${this.escapeHtml(img.title)}</h4>
+                                <p class="image-meta"><strong>Filename:</strong> ${this.escapeHtml(img.filename)}</p>
+                                <p class="image-meta"><strong>Category:</strong> ${this.escapeHtml(img.category || 'Uncategorized')}</p>
+                                <p class="image-meta"><strong>Tags:</strong> ${this.formatTagList(img.tags)}</p>
+                            </div>
+                            <div class="image-actions">
+                                <button onclick="window.adminGalleryManager.editImage('${this.escapeHtml(img.filename)}')" class="admin-btn" type="button">
+                                    <i data-feather="edit"></i>
+                                    <span>Edit Metadata</span>
+                                </button>
+                            </div>
+                        </article>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        this.renderOverviewStats();
 
         // Refresh Feather icons
         if (window.feather) {
@@ -171,6 +451,10 @@ class AdminGalleryManager {
                 </div>
             </div>
         `;
+
+        if (window.feather) {
+            feather.replace();
+        }
     }
 
     // Edit image metadata

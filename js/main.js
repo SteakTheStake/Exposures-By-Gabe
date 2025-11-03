@@ -1,3 +1,5 @@
+window.addEventListener('gallery:updated', handleGalleryUpdated);
+
 // Initialize Feather Icons
 document.addEventListener('DOMContentLoaded', function() {
     feather.replace();
@@ -12,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Make gallery manager globally available for refresh functionality
     window.galleryManager = galleryManager;
+    initializeCollectionCards();
     
     // Add refresh button for development/testing
     const refreshButton = document.createElement('button');
@@ -184,6 +187,219 @@ function toggleMobileMenu() {
     const navLinks = document.querySelector('.nav-links');
     navLinks.classList.toggle('mobile-active');
 }
+
+function handleGalleryUpdated(event) {
+    const images = event && event.detail && Array.isArray(event.detail.images)
+        ? event.detail.images
+        : [];
+    updateHeroMetrics(images);
+    updateHeroPreview(images);
+    updateCollectionCounts(images);
+}
+
+function updateHeroMetrics(images) {
+    const totalImages = images.length;
+    const categorySet = new Set();
+    const tagFrequency = new Map();
+
+    images.forEach(image => {
+        const categoryValue = (image.categoryValue || image.category || '').toString().trim().toLowerCase();
+        if (categoryValue) {
+            categorySet.add(categoryValue);
+        }
+
+        if (Array.isArray(image.tags)) {
+            image.tags.forEach(tag => {
+                if (!tag) return;
+                const normalized = tag.toLowerCase();
+                if (normalized === 'photography') return;
+                tagFrequency.set(normalized, (tagFrequency.get(normalized) || 0) + 1);
+            });
+        }
+    });
+
+    const stats = {
+        images: totalImages,
+        categories: categorySet.size,
+        tags: tagFrequency.size
+    };
+
+    Object.entries(stats).forEach(([key, value]) => {
+        const element = document.querySelector(`[data-hero-metric="${key}"]`);
+        if (element) {
+            element.textContent = value;
+        }
+    });
+
+    let spotlightTag = null;
+    let spotlightCount = 0;
+    tagFrequency.forEach((count, tag) => {
+        if (count > spotlightCount) {
+            spotlightTag = tag;
+            spotlightCount = count;
+        }
+    });
+
+    const highlightElement = document.querySelector('[data-hero-highlight]');
+    const highlightCountElement = document.querySelector('[data-hero-highlight-count]');
+    const highlightButton = document.querySelector('[data-hero-highlight-button]');
+
+    if (spotlightTag && highlightElement) {
+        highlightElement.textContent = capitalizeTag(spotlightTag);
+        if (highlightCountElement) {
+            highlightCountElement.textContent = spotlightCount;
+        }
+        if (highlightButton) {
+            highlightButton.dataset.tag = spotlightTag;
+        }
+    } else if (highlightElement) {
+        highlightElement.textContent = totalImages > 0 ? 'Gallery' : 'Loading';
+        if (highlightCountElement) {
+            highlightCountElement.textContent = totalImages;
+        }
+        if (highlightButton) {
+            highlightButton.dataset.tag = 'all';
+        }
+    }
+}
+
+function updateHeroPreview(images) {
+    const previewRoot = document.getElementById('heroPreview');
+    if (!previewRoot) return;
+
+    if (!images.length) {
+        previewRoot.innerHTML = `
+            <div class="preview-placeholder">
+                <i data-feather="grid"></i>
+                <p>Gallery previews appear once images finish loading.</p>
+            </div>
+        `;
+        if (window.feather) {
+            feather.replace();
+        }
+        return;
+    }
+
+    const samples = selectHeroSamples(images, 3);
+    previewRoot.innerHTML = '';
+
+    samples.forEach(sample => {
+        const tile = document.createElement('button');
+        tile.type = 'button';
+        tile.className = 'preview-tile subtle-bg elegant-shadow';
+        tile.setAttribute('aria-label', `${sample.title} - open collection`);
+
+        const img = document.createElement('img');
+        img.src = sample.url;
+        img.alt = sample.alt || sample.title || 'Gallery preview';
+        img.loading = 'lazy';
+        tile.appendChild(img);
+
+        const overlay = document.createElement('div');
+        overlay.className = 'preview-overlay';
+
+        const badge = document.createElement('span');
+        badge.className = 'preview-badge';
+        badge.textContent = capitalizeTag(sample.categoryValue || sample.category || 'Gallery');
+
+        const title = document.createElement('span');
+        title.className = 'preview-title';
+        title.textContent = sample.title;
+
+        overlay.appendChild(badge);
+        overlay.appendChild(title);
+        tile.appendChild(overlay);
+
+        tile.addEventListener('click', () => {
+            navigateToTag(sample.categoryValue || sample.category || 'all');
+        });
+
+        previewRoot.appendChild(tile);
+    });
+
+    if (window.feather) {
+        feather.replace();
+    }
+}
+
+function updateCollectionCounts(images) {
+    const tagCounts = new Map();
+    const aliasMap = {
+        portrait: 'portraits',
+        portraits: 'portraits',
+        landscape: 'landscape',
+        landscapes: 'landscape'
+    };
+
+    images.forEach(image => {
+        if (!Array.isArray(image.tags)) return;
+        image.tags.forEach(tag => {
+            if (!tag) return;
+            const normalized = tag.toLowerCase();
+            const canonical = aliasMap[normalized] || normalized;
+            tagCounts.set(canonical, (tagCounts.get(canonical) || 0) + 1);
+        });
+    });
+
+    const cards = document.querySelectorAll('[data-collection-tag]');
+    cards.forEach(card => {
+        const tag = (card.getAttribute('data-collection-tag') || '').toLowerCase();
+        const canonical = aliasMap[tag] || tag;
+        const count = tagCounts.get(canonical) || 0;
+        const countElement = card.querySelector('[data-collection-count]');
+        if (countElement) {
+            countElement.textContent = count;
+        }
+        card.classList.toggle('is-disabled', count === 0);
+        if (card instanceof HTMLButtonElement) {
+            card.disabled = count === 0;
+        }
+    });
+}
+
+function selectHeroSamples(images, count) {
+    if (images.length <= count) {
+        return images.slice(0, count);
+    }
+    const shuffled = images.slice().sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+}
+
+function capitalizeTag(tag) {
+    return tag
+        .toString()
+        .replace(/[-_]+/g, ' ')
+        .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function initializeCollectionCards() {
+    const cards = document.querySelectorAll('[data-collection-tag]');
+    cards.forEach(card => {
+        card.addEventListener('click', () => {
+            const tag = card.getAttribute('data-collection-tag');
+            navigateToTag(tag);
+        });
+    });
+
+    if (window.galleryManager && typeof window.galleryManager.getAllImages === 'function') {
+        const images = window.galleryManager.getAllImages();
+        if (Array.isArray(images) && images.length) {
+            updateHeroMetrics(images);
+            updateHeroPreview(images);
+            updateCollectionCounts(images);
+        }
+    }
+}
+
+function navigateToTag(tag) {
+    const normalized = tag ? tag.toLowerCase() : 'all';
+    if (window.galleryManager && typeof window.galleryManager.filterGallery === 'function') {
+        window.galleryManager.filterGallery(normalized);
+    }
+    scrollToGallery();
+}
+
+window.navigateToTag = navigateToTag;
 
 // Utility function: Throttle
 function throttle(func, limit) {
