@@ -290,34 +290,110 @@ class GalleryManager {
 
     // Generate default tags from filename
     generateTagsFromFilename(filename) {
-        const name = filename.replace(/\.[^/.]+$/, '').toLowerCase();
-        const tagMap = {
-            'mountain': ['landscape', 'mountain'],
-            'forest': ['nature', 'forest'],
-            'ocean': ['seascape', 'ocean'],
-            'beach': ['seascape', 'beach'],
-            'sunset': ['landscape', 'sunset'],
-            'sunrise': ['landscape', 'sunrise'],
-            'lofi': ['lofi'],
-            'abstract': ['abstract'],
-            'street': ['street'],
-            'urbex': ['urbex'],
-            'nature': ['nature'],
-            'landscape': ['landscape'],
-            'portrait': ['portraits', 'portrait'],
-            'portraits': ['portraits'],
-            'photography': ['photography']
-        };
-
-        // Find matching tags
-        for (const [keyword, tags] of Object.entries(tagMap)) {
-            if (name.includes(keyword)) {
-                return tags;
-            }
+        if (!filename) {
+            return ['photography'];
         }
 
-        // Default tags
-        return ['photography'];
+        const baseName = filename.replace(/\.[^/.]+$/, '').toLowerCase();
+        const rawTokens = baseName.split(/[^a-z0-9]+/).filter(Boolean);
+
+        const keywordMap = {
+            'abstract': ['abstract'],
+            'abrstract': ['abstract'],
+            'animal': ['animal'],
+            'animals': ['animal'],
+            'beach': ['coastal', 'beach'],
+            'casual': ['casual'],
+            'car': ['cars', 'car'],
+            'cars': ['cars', 'car'],
+            'coast': ['coastal'],
+            'coastal': ['coastal'],
+            'forest': ['nature', 'forest'],
+            'forests': ['nature', 'forest'],
+            'geometric': ['geometric'],
+            'industrial': ['industrial'],
+            'industry': ['industrial'],
+            'landscape': ['landscape'],
+            'landscapes': ['landscape'],
+            'lofi': ['lofi'],
+            'mountain': ['landscape', 'mountain'],
+            'mountains': ['landscape', 'mountain'],
+            'nature': ['nature'],
+            'night': ['night'],
+            'nightly': ['night'],
+            'ocean': ['coastal', 'ocean'],
+            'people': ['people'],
+            'person': ['people'],
+            'portrait': ['portraits', 'portrait'],
+            'portraits': ['portraits', 'portrait'],
+            'sea': ['coastal', 'ocean'],
+            'sky': ['sky'],
+            'skies': ['sky'],
+            'steet': ['street'],
+            'stree': ['street'],
+            'street': ['street'],
+            'streets': ['street'],
+            'sunrise': ['landscape', 'sunrise'],
+            'sunset': ['landscape', 'sunset'],
+            'uncanny': ['uncanny'],
+            'urbex': ['urbex'],
+            'urban': ['urbex', 'street'],
+            'vehicle': ['cars'],
+            'vehicles': ['cars']
+        };
+
+        const stopWords = new Set([
+            'a', 'an', 'and', 'at', 'by', 'from', 'for', 'in', 'into', 'of', 'on', 'onto', 'or', 'over',
+            'the', 'to', 'with', 'without', 'img', 'image', 'images', 'photo', 'photograph', 'photography',
+            'copy', 'final', 'edited', 'edit', 'version', 'untitled', 'new', 'draft', 'tmp', 'test'
+        ]);
+
+        const seen = new Set();
+        const tags = [];
+        const addTag = (tag) => {
+            const normalized = tag.toString().trim().toLowerCase();
+            if (!normalized || seen.has(normalized)) return;
+            seen.add(normalized);
+            tags.push(normalized);
+        };
+
+        rawTokens.forEach(token => {
+            const normalizedToken = token.trim().toLowerCase();
+            if (!normalizedToken) return;
+            if (normalizedToken.length <= 2) return;
+            if (stopWords.has(normalizedToken)) return;
+            if (/\d/.test(normalizedToken)) return;
+
+            const mapped = keywordMap[normalizedToken];
+            if (mapped) {
+                mapped.forEach(addTag);
+            } else {
+                addTag(normalizedToken);
+            }
+        });
+
+        if (tags.length === 0) {
+            addTag('photography');
+        }
+
+        const categoryValues = new Set(
+            this.getCategoryOptions().map(option => option.value)
+        );
+
+        if (categoryValues.size > 0) {
+            const categoryTags = [];
+            const otherTags = [];
+            tags.forEach(tag => {
+                if (categoryValues.has(tag)) {
+                    categoryTags.push(tag);
+                } else {
+                    otherTags.push(tag);
+                }
+            });
+            return categoryTags.concat(otherTags);
+        }
+
+        return tags;
     }
 
     // Save metadata to localStorage
