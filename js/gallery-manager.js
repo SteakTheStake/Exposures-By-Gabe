@@ -19,76 +19,226 @@ class GalleryManager {
     constructor() {
         this.images = [];
         this.imageMetadata = JSON.parse(localStorage.getItem('gallery-metadata') || '{}');
+
+        // === NEW: CSV config ===
+        this.csvConfig = {
+            // Put the CSV wherever you like (repo root or /Img). Example names:
+            // 'values.csv' or 'Img/values.csv'
+            path: 'values.csv', 
+            // Which column holds the tag string if both exist
+            preferredValueColumns: ['tags', 'value'],
+            // If true, use first tag as category if image has no explicit category in metadata/localStorage
+            deriveCategoryFromFirstTag: true
+        };
+
+        // Will be filled with { 'filename.ext': ['tag','tag2',...] }
+        this.csvTagMap = {};
+
         this.init();
     }
 
-    // Initialize the gallery manager
-    async init() {
-        await this.loadImagesFromRepository();
-        this.renderGallery();
-        this.setupFilters();
+    // === NEW: small CSV parser (lenient) ===
+    // Handles plain CSV with optional quotes; not a full RFC parser, but good for tag lists.
+    parseCSV(text) {
+        const lines = text.split(/\r?\n/).filter(l => l.trim().length);
+        if (!lines.length) return { headers: [], rows: [] };
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        const rows = [];
+        for (let i = 1; i < lines.length; i++) {
+            const row = this.splitCSVRow(lines[i]);
+            if (!row.length) continue;
+            const obj = {};
+            headers.forEach((h, idx) => obj[h] = (row[idx] ?? '').trim());
+            rows.push(obj);
+        }
+        return { headers, rows };
     }
 
-    // Load images dynamically from the GitHub repository /Img folder
-    async loadImagesFromRepository() {
-        // GitHub repository configuration
-        const githubConfig = {
+    splitCSVRow(line) {
+        const out = [];
+        let cur = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"' ) {
+                // toggle quotes or escape ""
+                if (inQuotes && line[i+1] === '"') {
+                    cur += '"';
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (ch === ',' && !inQuotes) {
+                out.push(cur);
+                cur = '';
+            } else {
+                cur += ch;
+            }
+        }
+        out.push(cur);
+        return out;
+    }
+
+    // === NEW: tag tokenization (order preserved, no expansion) ===
+    tokenizeTags(raw) {
+        if (!raw) return [];
+        // Accept: comma, semicolon, whitespace, or hyphen
+        const parts = raw
+            .toLowerCase()
+            .split(/[,;\s\-]+/)
+            .map(s => s.trim())
+            .filter(Boolean);
+
+        // de-dup while preserving order
+        const seen = new Set();
+        const out = [];
+        for (const p of parts) {
+            if (!seen.has(p)) { seen.add(p); out.push(p); }
+        }
+        return out;
+    }
+
+    // === NEW: load CSV from repo and build filename -> tags map ===
+    async loadCsvTagMap() {
+        const config = this.getGithubConfig();
+        // allow absolute or relative CSV path within repo
+        const normalized = this.csvConfig.path.replace(/^\/+/, '');
+        const csvRawUrl = `https://raw.githubusercontent.com/${config.username}/${config.repository}/refs/heads/${config.branch}/${normalized}`;
+
+        try {
+            const resp = await fetch(csvRawUrl, { cache: 'no-store' });
+            if (!resp.ok) throw new Error(`CSV fetch failed: ${resp.status}`);
+            const text = await resp.text();
+            const { headers, rows } = this.parseCSV(text);
+            if (!headers.length || !rows.length) return;
+
+            // Accept either 'filename' or 'id' + value/tags
+            const hasFilename = headers.includes('filename');
+            const hasId = headers.includes('id');
+
+            const valueCol = this.csvConfig.preferredValueColumns.find(c => headers.includes(c));
+            if (!valueCol) return;
+
+            const tagMap = {};
+            for (const row of rows) {
+                let keyName = null;
+                if (hasFilename) keyName = row['filename'];
+                else if (hasId) keyName = row['id'];
+
+                if (!keyName) continue;
+
+                let fileKey = keyName.trim();
+                // If they used numeric ids, we’ll map to “<id>.webp” by default,
+                // but we’ll reconcile extension later against actual files.
+                const rawValue = (row[valueCol] || '').trim();
+                if (!rawValue) continue;
+
+                const tokens = this.tokenizeTags(rawValue);
+                if (!tokens.length) continue;
+
+                tagMap[fileKey.toLowerCase()] = tokens; // store lowercase key
+            }
+
+            this.csvTagMap = tagMap;
+        } catch (err) {
+            console.warn('No CSV tag map applied:', err);
+            this.csvTagMap = {};
+        }
+    }
+
+
+    // Get GitHub repository configuration
+    getGithubConfig() {
+        return {
             username: 'SteakTheStake',
             repository: 'Exposures-By-Gabe',
             branch: 'main',
             folder: 'Img'
         };
+    }
+
+    lookupCsvTagsForFilename(filename) {
+        if (!filename) return null;
+        const lower = filename.toLowerCase();
+
+        // 1) direct filename hit (e.g., "forest-01.webp")
+        if (this.csvTagMap[lower]) return this.csvTagMap[lower];
+
+        // 2) base name hit without extension (e.g., "forest-01")
+        const base = lower.replace(/\.[^.]+$/, '');
+        if (this.csvTagMap[base]) return this.csvTagMap[base];
+
+        // 3) numeric id hit (e.g., CSV has "0" and file is "0.webp")
+        const numeric = base.match(/^\d+$/) ? base : null;
+        if (numeric && this.csvTagMap[numeric]) return this.csvTagMap[numeric];
+
+        return null;
+    }
+
+
+    async loadImagesFromRepository() {
+        const githubConfig = this.getGithubConfig();
 
         try {
-            // Fetch directory contents from GitHub API
             const apiUrl = `https://api.github.com/repos/${githubConfig.username}/${githubConfig.repository}/contents/${githubConfig.folder}`;
-            const response = await fetch(apiUrl);
-            
-            if (!response.ok) {
-                throw new Error('Failed to fetch repository contents');
-            }
+            const response = await fetch(apiUrl, { cache: 'no-store' });
+            if (!response.ok) throw new Error('Failed to fetch repository contents');
 
             const contents = await response.json();
             const detectedImages = [];
             let imageCounter = 1;
 
-            // Filter for image files and process them
-            const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'tif'];
-            
+            const imageExtensions = ['jpg','jpeg','png','gif','webp','bmp','tiff','tif'];
+
             for (const item of contents) {
-                // Check if it's a file (not a directory) and has an image extension
-                if (item.type === 'file') {
-                    const extension = item.name.toLowerCase().split('.').pop();
-                    if (imageExtensions.includes(extension)) {
-                        // Generate the raw GitHub URL for the image
-                        const githubRawUrl = `https://raw.githubusercontent.com/${githubConfig.username}/${githubConfig.repository}/refs/heads/${githubConfig.branch}/${githubConfig.folder}/${item.name}`;
-                        
-                        try {
-                            const imageData = await this.loadImageWithMetadata(githubRawUrl, item.name, imageCounter);
-                            detectedImages.push(imageData);
-                            imageCounter++;
-                        } catch (error) {
-                            console.log(`Could not load image: ${item.name}`);
-                        }
+                if (item.type !== 'file') continue;
+                const extension = item.name.toLowerCase().split('.').pop();
+                if (!imageExtensions.includes(extension)) continue;
+
+                const githubRawUrl = `https://raw.githubusercontent.com/${githubConfig.username}/${githubConfig.repository}/refs/heads/${githubConfig.branch}/${githubConfig.folder}/${item.name}`;
+
+                try {
+                    const imageData = await this.loadImageWithMetadata(githubRawUrl, item.name, imageCounter);
+
+                    // === NEW: Apply CSV tags if present ===
+                    const csvTags = this.lookupCsvTagsForFilename(item.name);
+                    if (csvTags && csvTags.length) {
+                        imageData.defaultTags = csvTags; // override defaults, order preserved
                     }
+
+                    detectedImages.push(imageData);
+                    imageCounter++;
+                } catch (_) {
+                    console.log(`Could not load image: ${item.name}`);
                 }
             }
 
-            // Process each detected image and merge with stored metadata
+            // Merge with stored metadata & finalize
             this.images = detectedImages.map(img => {
-                const metadata = this.imageMetadata[img.filename] || {};
-                const defaultCategoryCandidate = (img.defaultTags && img.defaultTags[0]) || metadata.category;
-                const categoryDetails = this.resolveCategory(metadata.category, metadata.categoryValue, defaultCategoryCandidate);
-                const baseTags = this.normalizeTags(metadata.tags || img.defaultTags);
+                const meta = this.imageMetadata[img.filename] || {};
+
+                // Determine tags: prefer CSV (already applied as defaultTags), then metadata.tags, fallback to defaultTags
+                const baseTags = this.normalizeTags(meta.tags && meta.tags.length ? meta.tags : img.defaultTags);
+
+                // Category: prefer metadata; else optionally derive from first tag
+                const preferredCategoryCandidate = meta.categoryValue || meta.category;
+                const csvFirstTag = (this.csvConfig.deriveCategoryFromFirstTag && baseTags.length) ? baseTags[0] : null;
+
+                const categoryDetails = this.resolveCategory(
+                    meta.category || img.category,            // label candidate
+                    preferredCategoryCandidate || csvFirstTag, // value candidate
+                    csvFirstTag                                // fallback: first tag from CSV
+                );
+
                 const tags = this.ensureCategoryTag(baseTags, categoryDetails.value);
 
                 return {
                     id: img.filename,
                     filename: img.filename,
-                    url: img.url, // Use the GitHub raw URL directly
+                    url: img.url,
                     alt: img.alt,
-                    title: metadata.title || img.title,
-                    tags: tags,
+                    title: meta.title || img.title,
+                    tags,
                     category: categoryDetails.label,
                     categoryValue: categoryDetails.value,
                     captureDate: img.captureDate
@@ -102,19 +252,10 @@ class GalleryManager {
         }
     }
 
-    // Get GitHub repository configuration
-    getGithubConfig() {
-        return {
-            username: 'SteakTheStake',
-            repository: 'Exposures-By-Gabe',
-            branch: 'main',
-            folder: 'Img'
-        };
-    }
-
     // Refresh gallery to check for new images
     async refreshGallery() {
         console.log('Refreshing gallery from GitHub repository...');
+        await this.loadCsvTagMap();
         await this.loadImagesFromRepository();
         this.renderGallery();
         this.setupFilters();

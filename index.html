@@ -23,6 +23,7 @@
                 <a href="#gallery" class="nav-link">Gallery</a>
                 <a href="#about" class="nav-link">About</a>
                 <a href="#contact" class="nav-link">Contact</a>
+                <a href="https://www.instagram.com/gabe_corr/" class="nav-link instagram-icon"><p>Insta</p></a>
             </div>
             <button class="mobile-menu-toggle" id="mobileMenuToggle">
                 <i data-feather="menu"></i>
@@ -67,8 +68,8 @@
                         </div>
                     </div>
                     <div class="hero-highlight">
-                        <span class="hero-highlight-label">Spotlight collection</span>
-                        <button type="button" class="hero-highlight-pill" data-hero-highlight-button data-tag="landscape" onclick="navigateToTag(this.dataset.tag || 'landscape')">
+                        <span class="hero-highlight-label">Spotlight tag</span>
+                        <button type="button" class="hero-highlight-pill" data-hero-highlight-button data-tag="portraits" onclick="navigateToTag(this.dataset.tag || 'portraits')">
                             <span class="hero-highlight-name" data-hero-highlight>&mdash;</span>
                             <span class="hero-highlight-meta"><span data-hero-highlight-count>0</span> images</span>
                         </button>
@@ -76,11 +77,11 @@
                 </div>
                 <div class="hero-visual subtle-bg elegant-shadow">
                     <div class="hero-visual-header">
-                        <p>Jump into a mood</p>
-                        <div class="hero-visual-actions">
-                            <button type="button" class="hero-pill" onclick="navigateToTag('landscape')">Landscape</button>
-                            <button type="button" class="hero-pill" onclick="navigateToTag('urbex')">Urbex</button>
-                            <button type="button" class="hero-pill" onclick="navigateToTag('portraits')">Portraits</button>
+                        <p>Jump into a category</p>
+                        <div class="hero-visual-actions" role="group" aria-label="Quick tag filters">
+                            <button type="button" class="hero-pill" data-collection-tag="portraits">Portraits</button>
+                            <button type="button" class="hero-pill" data-collection-tag="nature">Nature</button>
+                            <button type="button" class="hero-pill" data-collection-tag="water">Water</button>
                         </div>
                     </div>
                     <div class="hero-visual-grid" id="heroPreview" aria-live="polite" aria-label="Featured gallery preview">
@@ -123,6 +124,16 @@
                         <span class="collection-label">images</span>
                     </div>
                 </button>
+                <button type="button" class="collection-card subtle-bg elegant-shadow" data-collection-tag="street">
+                    <div class="collection-card-body">
+                        <h3>Street</h3>
+                        <p>Electric crosswalks, candid frames, and neon reflections meant for campaigns with grit and motion.</p>
+                    </div>
+                    <div class="collection-card-meta">
+                        <span class="collection-count" data-collection-count="street">0</span>
+                        <span class="collection-label">images</span>
+                    </div>
+                </button>
                 <button type="button" class="collection-card subtle-bg elegant-shadow" data-collection-tag="portraits">
                     <div class="collection-card-body">
                         <h3>Portraits</h3>
@@ -130,6 +141,16 @@
                     </div>
                     <div class="collection-card-meta">
                         <span class="collection-count" data-collection-count="portraits">0</span>
+                        <span class="collection-label">images</span>
+                    </div>
+                </button>
+                <button type="button" class="collection-card subtle-bg elegant-shadow" data-collection-tag="lofi">
+                    <div class="collection-card-body">
+                        <h3>Lofi</h3>
+                        <p>Soft focus, grain, and analog color drift for dreamy cover art, zines, and alt-pop visuals.</p>
+                    </div>
+                    <div class="collection-card-meta">
+                        <span class="collection-count" data-collection-count="lofi">0</span>
                         <span class="collection-label">images</span>
                     </div>
                 </button>
@@ -152,13 +173,14 @@
         <div class="container">
             <div class="section-heading">
                 <p class="section-kicker">Gallery</p>
-                <h2 class="section-title">Explore the portfolio</h2>
-                <p class="section-subtitle">Use the adaptive filters to discover new perspectives. Every image links back to its original repository source.</p>
+                <h2 class="section-title">My work at a glace</h2>
+                <p class="section-subtitle">Please note that every photograph on this site is from a different time and age of my life.</p><p class="section-subtitle"></p> Some of these photos be from little 14 year old me!</p>
             </div>
             
             <!-- Gallery Filters -->
             <div class="gallery-filters subtle-bg elegant-shadow">
-                <h3>Filter by Category</h3>
+                <h3>Filter by Tag</h3>
+                <p class="filter-note">Tags update automatically from gallery-manager, so you can jump between moods as soon as new images land.</p>
                 <div class="filter-buttons" id="filterButtons">
                     <!-- Filter buttons will be populated by gallery-manager.js -->
                 </div>
@@ -184,40 +206,38 @@
                     <p class="about-description">
                         Welcome to Exposures By Gabe. I'm passionate about capturing the beauty of the natural world 
                         and sharing moments that inspire and move people. Each photograph tells a story, whether it's the 
-                        serene tranquility of a mountain landscape or the dynamic energy of ocean waves.
+                        beautiful to look at or something that makes you think.
                     </p>
                     <p class="about-description">
-                        My work focuses on landscape, urbex, and portrait photography--always seeking to find the extraordinary 
-                        in the ordinary and to showcase the incredible diversity of our planet's textures and moods.
+                        My work focuses on landscape, urban environments, and portrait photography, I'm always seeking to find the little oversaught details in ordinary life and to showcase the complexities of the world.
                     </p>
                     <div class="about-highlights">
                         <div class="about-highlight">
-                            <i data-feather="map"></i>
+                            <i style="width: 10rem;" data-feather="map"></i>
                             <div>
                                 <h4>Location scouting</h4>
-                                <p>Remote peaks, industrial relics, hidden coastlines--scouted and documented ahead of your shoot.</p>
+                                <p>Remote peaks, industrial relics, and hidden coastlines are scouted and documented ahead of your shoot.</p>
                             </div>
                         </div>
                         <div class="about-highlight">
-                            <i data-feather="aperture"></i>
+                            <i style="width: 10rem;" data-feather="aperture"></i>
                             <div>
                                 <h4>Art direction</h4>
                                 <p>Styling, mood boards, and lighting designed to match your brand story or campaign concept.</p>
                             </div>
                         </div>
                         <div class="about-highlight">
-                            <i data-feather="clock"></i>
+                            <i style="width: 10rem;" data-feather="clock"></i>
                             <div>
-                                <h4>End-to-end delivery</h4>
-                                <p>Handled with professional grade post-processing, proofing galleries, and print-ready exports.</p>
+                                <h4>Easy delivery</h4>
+                                <p>Handled with professional grade post-processing, proofing galleries, and print-ready exports. I'll make it easy for your needs!</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="about-image">
                     <div class="about-placeholder">
-                        <i data-feather="camera"></i>
-                        <p>Photographer</p>
+                        <img style="width:200px; border-radius:100%; opacity:90%;" src="static/pfp.jpg" alt="Portrait of Gabe Corr, the photographer behind Exposures By Gabe." decoding="async" loading="lazy">
                     </div>
                 </div>
             </div>
@@ -229,14 +249,14 @@
         <div class="container">
             <div class="section-heading">
                 <p class="section-kicker">Workflow</p>
-                <h2 class="section-title">From concept to delivery</h2>
-                <p class="section-subtitle">A collaborative journey built around your narrative, timeline, and vision.</p>
+                <h2 class="section-title">Concept to delivery</h2>
+                <p class="section-subtitle">A collaborative journey built around your needs, timeline, and vision.</p>
             </div>
             <div class="process-grid">
                 <article class="process-card subtle-bg elegant-shadow">
                     <span class="process-step">01</span>
                     <h3>Discover</h3>
-                    <p>We align on mood boards, desired locations, and the emotional tone of your project.</p>
+                    <p>I align on mood boards, desired locations, and the emotional tone of your project.</p>
                 </article>
                 <article class="process-card subtle-bg elegant-shadow">
                     <span class="process-step">02</span>
@@ -246,7 +266,7 @@
                 <article class="process-card subtle-bg elegant-shadow">
                     <span class="process-step">03</span>
                     <h3>Deliver</h3>
-                    <p>Curated selections, polished edits, and exports optimized for web, print, and campaign use.</p>
+                    <p>Curated selections, polished edits, and exports optimized for web, print, and professional use.</p>
                 </article>
             </div>
         </div>
@@ -257,8 +277,8 @@
         <div class="container">
             <div class="cta-card subtle-bg elegant-shadow">
                 <div class="cta-text">
-                    <h2>Ready to craft your next story?</h2>
-                    <p>Whether you need atmospheric album artwork, a cinematic campaign, or intimate portraits, let's build it together.</p>
+                    <h2>Lets do it!</h2>
+                    <p>Whether you need atmospheric album artwork, a cinematic campaign, or beautiful portraits, let's build it together.</p>
                 </div>
                 <div class="cta-actions">
                     <a href="#contact" class="cta-button">
@@ -275,43 +295,60 @@
     </section>
 
     <!-- Contact Section -->
-    <section id="contact" class="contact-section">
-        <div class="container">
-            <div class="section-heading">
-                <p class="section-kicker">Contact</p>
-                <h2 class="section-title">Let's collaborate</h2>
-                <p class="section-subtitle">Share your vision and we'll design a shoot tailored to your story, location, and audience.</p>
-            </div>
-            <div class="contact-grid">
-                <div class="contact-card subtle-bg elegant-shadow">
-                    <div class="contact-item">
-                        <i data-feather="instagram"></i>
-                        <span>@gabe_corr</span>
-                    </div>
-                    <div class="contact-item">
-                        <i data-feather="globe"></i>
-                        <span>Available for commissions</span>
-                    </div>
-                    <p class="contact-note">Send a DM on Instagram or use the prompt to draft your inquiry. Expect a personal response within 48 hours.</p>
-                </div>
-                <div class="contact-card subtle-bg elegant-shadow">
-                    <h3 class="contact-form-title">Project Inquiry Prompt</h3>
-                    <form class="contact-form" onsubmit="return false;">
-                        <div class="form-row">
-                            <input type="text" placeholder="Your name" aria-label="Your name">
-                            <input type="text" placeholder="Email or social handle" aria-label="Email or social handle">
-                        </div>
-                        <textarea rows="4" placeholder="Tell me about the story you want to capture" aria-label="Project details"></textarea>
-                        <p class="contact-note small">This prompt helps draft your message. The button below opens your email client with the details.</p>
-                        <a href="mailto:?subject=Project%20Inquiry%20-%20Exposures%20By%20Gabe" class="cta-button outline contact-mail">
-                            <span>Draft email</span>
-                            <i data-feather="mail"></i>
-                        </a>
-                    </form>
-                </div>
-            </div>
+<section id="contact" class="contact-section">
+  <div class="container">
+    <div class="section-heading">
+      <p class="section-kicker">Contact</p>
+      <h2 class="section-title">Let's collaborate</h2>
+      <p class="section-subtitle">Share your vision and we'll design a shoot tailored to your story, location, and audience.</p>
+    </div>
+
+    <div class="contact-grid">
+      <div class="contact-card subtle-bg elegant-shadow">
+        <div class="contact-item">
+          <i data-feather="instagram"></i>
+          <span>@gabe_corr</span>
         </div>
-    </section>
+        <div class="contact-item">
+          <i data-feather="globe"></i>
+          <span>Available for commissions</span>
+        </div>
+        <p class="contact-note">Send a DM on Instagram or use the prompt to draft your inquiry. Expect a personal response within 48 hours.</p>
+      </div>
+
+      <div class="contact-card subtle-bg elegant-shadow">
+        <h3 class="contact-form-title">Project Inquiry Prompt</h3>
+        <form class="contact-form" onsubmit="return false;">
+          <div class="form-row">
+            <input type="text" placeholder="Your name" aria-label="Your name">
+            <input type="text" placeholder="Email or social handle" aria-label="Email or social handle">
+          </div>
+          <textarea rows="4" placeholder="Tell me about the story you want to capture" aria-label="Project details"></textarea>
+          <p class="contact-note small">This prompt helps draft your message. The button below opens your email client with the details.</p>
+
+          <!-- Encoded mail link (Base64) -->
+          <a
+            href="#"
+            class="cta-button outline contact-mail"
+            data-email="R2FiZUNvcnIyNUBnbWFpbC5jb20="
+            data-subject="Project Inquiry - Exposures By Gabe"
+            rel="nofollow noopener"
+          >
+            <span>Draft email</span>
+            <i data-feather="mail"></i>
+          </a>
+
+          <noscript>
+            <!-- Fallback if JS is disabled -->
+            <p class="contact-note small">
+              Email: gabe<span style="display:none">trap</span>corr25 [at] gmail [dot] com
+            </p>
+          </noscript>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
 
     <!-- Image Modal -->
     <div id="imageModal" class="modal">
@@ -336,5 +373,44 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
     <script src="js/gallery-manager.js"></script>
     <script src="js/main.js"></script>
+    <script>
+    (function () {
+        function buildBody(form) {
+        if (!form) return "";
+        const name = form.querySelector('input[aria-label="Your name"]')?.value?.trim();
+        const contact = form.querySelector('input[aria-label="Email or social handle"]')?.value?.trim();
+        const details = form.querySelector('textarea[aria-label="Project details"]')?.value?.trim();
+
+        const lines = [];
+        if (name)   lines.push("Name: " + name);
+        if (contact)lines.push("Contact: " + contact);
+        if (details){
+            if (lines.length) lines.push(""); // spacer line
+            lines.push(details);
+        }
+        return encodeURIComponent(lines.join("\n"));
+        }
+
+        document.addEventListener("click", function (e) {
+        const link = e.target.closest(".contact-mail");
+        if (!link) return;
+
+        e.preventDefault();
+
+        try {
+            const addr = atob(link.dataset.email || "");
+            const subject = encodeURIComponent(link.dataset.subject || "");
+            const body = buildBody(link.closest("form"));
+
+            const href = `mailto:${addr}?subject=${subject}${body ? `&body=${body}` : ""}`;
+            window.location.href = href;
+        } catch (err) {
+            // If decoding fails, do nothing visible to the user.
+            console.error("Email decode failed:", err);
+        }
+        }, { passive: true });
+    })();
+    </script>
+
 </body>
 </html>
