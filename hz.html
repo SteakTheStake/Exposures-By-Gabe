@@ -341,6 +341,11 @@
             </div>
 
             <div class="row">
+                <label for="toneLevelSlider">Tone Level: <span id="toneLevelLabel">80%</span></label>
+                <input type="range" id="toneLevelSlider" min="0" max="100" value="80">
+            </div>
+
+            <div class="row">
                 <label for="waveform">Waveform:</label>
                 <select id="waveform">
                     <option value="sine">Sine</option>
@@ -484,6 +489,7 @@
     // ---------- Audio state ----------
     let audioCtx = null;
     let masterGain = null;
+    let toneGain = null;
     let playing = false;
     let voices = [];
 
@@ -501,6 +507,8 @@
 
     const volumeSlider = document.getElementById("volumeSlider");
     const volLabel = document.getElementById("volLabel");
+    const toneLevelSlider = document.getElementById("toneLevelSlider");
+    const toneLevelLabel = document.getElementById("toneLevelLabel");
     const waveformSelect = document.getElementById("waveform");
     const modFreqSlider = document.getElementById("modFreq");
     const modFreqLabel = document.getElementById("modFreqLabel");
@@ -633,6 +641,9 @@
         masterGain = audioCtx.createGain();
         masterGain.gain.value = sliderToGain(volumeSlider.value);
         masterGain.connect(audioCtx.destination);
+        toneGain = audioCtx.createGain();
+        toneGain.gain.value = sliderToGain(toneLevelSlider.value);
+        toneGain.connect(masterGain);
 
         const mode = document.querySelector("input[name='mode']:checked").value;
         const numVoices = mode === "poly" ? 3 : 1;
@@ -664,6 +675,7 @@
             modOsc.connect(modGain);
             modGain.connect(carrier.frequency);
 
+            carrier.connect(toneGain);
             carrier.connect(masterGain);
 
             carrier.start();
@@ -740,6 +752,11 @@
             noiseGain = null;
         }
 
+        if (toneGain) {
+            toneGain.disconnect();
+            toneGain = null;
+        }
+
         if (masterGain) {
             masterGain.disconnect();
             masterGain = null;
@@ -761,6 +778,11 @@
     volumeSlider.addEventListener("input", () => {
         volLabel.textContent = volumeSlider.value + "%";
         if (masterGain) masterGain.gain.value = sliderToGain(volumeSlider.value);
+    });
+
+    toneLevelSlider.addEventListener("input", () => {
+        toneLevelLabel.textContent = toneLevelSlider.value + "%";
+        if (toneGain) toneGain.gain.value = sliderToGain(toneLevelSlider.value);
     });
 
     waveformSelect.addEventListener("change", () => {
