@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>582 Hz FM Focus Synth</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    :root {
+        --bg1: #e6f0ff;
+        --bg2: #d6e3ff;
+        --card-bg: #ffffff;
+        --accent: #5f7bff;
+        --accent-soft: #5f7bff40;
+        --text-main: #1e2330;
+        --text-soft: #606579;
+        --brightness: 1;
+        --contrast: 1;
+        --glow-strength: 1; /* 0–2 */
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top, var(--bg1), var(--bg2));
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 16px;
+        color: var(--text-main);
+        filter: brightness(var(--brightness)) contrast(var(--contrast));
+        transition: background 0.3s ease, filter 0.2s ease;
+    }
+
+    .page {
+        width: 100%;
+        max-width: 1100px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+    }
+
+    h1 {
+        margin: 4px 0 0;
+        font-size: 1.5rem;
+        text-align: center;
+        letter-spacing: 0.03em;
+    }
+
+    .subtext {
+        margin: 2px 0 8px;
+        font-size: 0.9rem;
+        text-align: center;
+        color: var(--text-soft);
+    }
+
+    .transport-row {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    button {
+        padding: 12px 32px;
+        font-size: 1.05rem;
+        border: none;
+        border-radius: 999px;
+        cursor: pointer;
+        background: var(--accent);
+        color: white;
+        box-shadow:
+            0 14px 32px rgba(0, 0, 0, calc(0.10 * var(--glow-strength))),
+            0 0 0 1px rgba(255, 255, 255, 0.35);
+        transition:
+            background 0.2s ease,
+            transform 0.1s ease,
+            box-shadow 0.15s ease,
+            filter 0.15s ease;
+    }
+
+    button:hover {
+        background: #4f6af0;
+        box-shadow:
+            0 18px 40px rgba(0, 0, 0, calc(0.14 * var(--glow-strength))),
+            0 0 0 1px rgba(255, 255, 255, 0.5);
+        filter: brightness(1.03);
+    }
+
+    button:active {
+        transform: translateY(1px);
+        box-shadow:
+            0 10px 20px rgba(0, 0, 0, calc(0.10 * var(--glow-strength)));
+    }
+
+    .transport-row small {
+        font-size: 0.8rem;
+        color: var(--text-soft);
+        text-align: center;
+    }
+
+    .layout {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 16px;
+    }
+
+    .panel {
+        background: radial-gradient(circle at top left, rgba(255,255,255,0.95), var(--card-bg));
+        padding: 16px 16px 18px;
+        border-radius: 22px;
+        box-shadow:
+            0 18px 40px rgba(15, 23, 42, calc(0.13 * var(--glow-strength))),
+            0 0 0 1px rgba(255, 255, 255, 0.7);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 1 1 280px;
+        max-width: 360px;
+        backdrop-filter: blur(16px);
+    }
+
+    .panel-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: var(--text-soft);
+    }
+
+    .row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.9rem;
+        flex-wrap: nowrap;
+    }
+
+    .row label {
+        font-size: 0.9rem;
+        color: var(--text-soft);
+        flex: 0 0 auto;
+    }
+
+    input[type=range] {
+        flex: 1;
+        accent-color: var(--accent);
+        touch-action: pan-y;
+    }
+
+    select {
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(15,23,42,0.06);
+        font-size: 0.9rem;
+        background: rgba(255,255,255,0.9);
+    }
+
+    .modes {
+        display: flex;
+        gap: 12px;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .modes input {
+        accent-color: var(--accent);
+    }
+
+    .breathing-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        text-align: center;
+        margin-top: 6px;
+    }
+
+    .breathing-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.85);
+        box-shadow:
+            0 18px 40px rgba(15, 23, 42, calc(0.16 * var(--glow-strength))),
+            0 0 40px var(--accent-soft);
+        animation: breathe 6s ease-in-out infinite;
+        background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.98), var(--accent-soft));
+    }
+
+    @keyframes breathe {
+        0%   { transform: scale(0.82); opacity: 0.5; }
+        50%  { transform: scale(1.08); opacity: 1; }
+        100% { transform: scale(0.82); opacity: 0.5; }
+    }
+
+    .breathing-text {
+        font-size: 0.85rem;
+        color: var(--text-soft);
+    }
+
+    .theme-chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 4px;
+    }
+
+    .theme-chip {
+        flex: 1 1 calc(33% - 4px);
+        min-width: 72px;
+        padding: 5px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(15,23,42,0.06);
+        font-size: 0.78rem;
+        cursor: pointer;
+        background: rgba(255,255,255,0.9);
+        text-align: center;
+        color: var(--text-soft);
+        transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+    }
+
+    .theme-chip.active {
+        background: rgba(95, 123, 255, 0.1);
+        box-shadow: 0 0 0 1px rgba(95,123,255,0.5);
+        color: var(--text-main);
+        transform: translateY(-1px);
+    }
+
+    .theme-chip:hover {
+        background: rgba(255,255,255,1);
+    }
+
+    .small-label {
+        font-size: 0.8rem;
+        color: var(--text-soft);
+    }
+
+    .toggle-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+        color: var(--text-soft);
+        margin-top: 4px;
+    }
+
+    .toggle-row input[type=checkbox] {
+        accent-color: var(--accent);
+    }
+
+    /* ------- Mobile tweaks ------- */
+    @media (max-width: 768px) {
+        body {
+            padding: 12px;
+        }
+
+        h1 {
+            font-size: 1.35rem;
+        }
+
+        .transport-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        #controlBtn {
+            width: 100%;
+        }
+
+        .layout {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .panel {
+            max-width: 100%;
+        }
+
+        .row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .row label {
+            width: 100%;
+        }
+
+        input[type=range] {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        button {
+            padding: 10px 24px;
+            font-size: 1rem;
+        }
+
+        .panel {
+            padding: 14px 14px 16px;
+            border-radius: 18px;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="page">
+
+    <h1>582 Hz FM Focus Synth</h1>
+    <p class="subtext">Shape the sound and the atmosphere. Let it keep you company while you focus or wind down.</p>
+
+    <div class="transport-row">
+        <button id="controlBtn">Start</button>
+        <small>
+            <label>
+                <input type="checkbox" id="backgroundToggle" checked>
+                Keep playing in background (if browser allows)
+            </label>
+        </small>
+    </div>
+
+    <div class="layout">
+        <!-- MAIN SYNTH PANEL -->
+        <div class="panel">
+            <div class="panel-title">Tone & FM</div>
+
+            <div class="row">
+                <label for="volumeSlider">Master Volume: <span id="volLabel">70%</span></label>
+                <input type="range" id="volumeSlider" min="0" max="100" value="70">
+            </div>
+
+            <div class="row">
+                <label for="waveform">Waveform:</label>
+                <select id="waveform">
+                    <option value="sine">Sine</option>
+                    <option value="square">Square</option>
+                    <option value="sawtooth">Sawtooth</option>
+                    <option value="triangle">Triangle</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <label>Mode:</label>
+                <div class="modes">
+                    <label>
+                        <input type="radio" name="mode" value="mono" checked> Mono
+                    </label>
+                    <label>
+                        <input type="radio" name="mode" value="poly"> Poly
+                    </label>
+                </div>
+            </div>
+
+            <div class="row">
+                <label for="modFreq">Mod Freq: <span id="modFreqLabel">584 Hz</span></label>
+                <input type="range" id="modFreq" min="0" max="2000" value="584">
+            </div>
+            <div class="row">
+                <label for="modDepth">FM Depth: <span id="modDepthLabel">65</span></label>
+                <input type="range" id="modDepth" min="0" max="300" value="65">
+            </div>
+        </div>
+
+        <!-- NOISE MASKER PANEL -->
+        <div class="panel">
+            <div class="panel-title">Noise Masker</div>
+
+            <div class="row">
+                <label>
+                    <input type="checkbox" id="noiseEnabled" checked>
+                    Enable noise
+                </label>
+            </div>
+
+            <div class="row">
+                <label for="noiseType">Noise type:</label>
+                <select id="noiseType">
+                    <option value="white">White</option>
+                    <option value="pink">Pink</option>
+                    <option value="brown" selected>Brown</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <label for="noiseLevel">Noise level: <span id="noiseLevelLabel">100%</span></label>
+                <input type="range" id="noiseLevel" min="0" max="100" value="100">
+            </div>
+
+            <div class="row">
+                <label for="noiseLowCut">Noise low cut: <span id="noiseLowCutLabel">100 Hz</span></label>
+                <input type="range" id="noiseLowCut" min="20" max="2000" value="100">
+            </div>
+
+            <div class="row">
+                <label for="noiseHighCut">Noise high cut: <span id="noiseHighCutLabel">8000 Hz</span></label>
+                <input type="range" id="noiseHighCut" min="200" max="20000" value="8000">
+            </div>
+
+            <div class="breathing-wrapper">
+                <div class="breathing-circle"></div>
+                <div class="breathing-text">
+                    Inhale as the circle grows.<br>
+                    Exhale as it softens.
+                </div>
+            </div>
+        </div>
+
+        <!-- APPEARANCE & MOOD PANEL -->
+        <div class="panel">
+            <div class="panel-title">Display & Mood</div>
+
+            <div class="small-label">Color presets</div>
+            <div class="theme-chip-row" id="themeChips">
+                <div class="theme-chip" data-color="blue" data-shade="medium">Blue</div>
+                <div class="theme-chip" data-color="mint" data-shade="medium">Mint</div>
+                <div class="theme-chip" data-color="lavender" data-shade="medium">Lavender</div>
+                <div class="theme-chip" data-color="peach" data-shade="medium">Peach</div>
+                <div class="theme-chip" data-color="slate" data-shade="medium">Slate</div>
+            </div>
+
+            <div class="row">
+                <label for="shadeSelect">Shade:</label>
+                <select id="shadeSelect">
+                    <option value="light">Light</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="dark">Dark</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <label for="brightnessSlider">Brightness: <span id="brightnessLabel">100%</span></label>
+                <input type="range" id="brightnessSlider" min="70" max="130" value="100">
+            </div>
+
+            <div class="row">
+                <label for="contrastSlider">Contrast: <span id="contrastLabel">100%</span></label>
+                <input type="range" id="contrastSlider" min="80" max="120" value="100">
+            </div>
+
+            <div class="row">
+                <label for="glowSlider">Glow: <span id="glowLabel">100%</span></label>
+                <input type="range" id="glowSlider" min="40" max="160" value="100">
+            </div>
+
+            <div class="toggle-row">
+                <input type="checkbox" id="rememberToggle" checked>
+                <span>Remember these display settings</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- Cookie helpers ----------
+    function setCookie(name, value, days) {
+        const d = new Date();
+        d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+        const expires = "expires=" + d.toUTCString();
+        document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+    }
+
+    function getCookie(name) {
+        const cname = name + "=";
+        const decoded = decodeURIComponent(document.cookie || "");
+        const parts = decoded.split(";");
+        for (let c of parts) {
+            c = c.trim();
+            if (c.indexOf(cname) === 0) return c.substring(cname.length);
+        }
+        return null;
+    }
+
+    // ---------- Audio state ----------
+    let audioCtx = null;
+    let masterGain = null;
+    let playing = false;
+    let voices = [];
+
+    // Noise chain
+    let noiseSource = null;
+    let noiseColorFilter = null;
+    let noiseHPFilter = null;
+    let noiseLPFilter = null;
+    let noiseGain = null;
+
+    // UI elements
+    const btn = document.getElementById("controlBtn");
+    const backgroundToggle = document.getElementById("backgroundToggle");
+    const rememberToggle = document.getElementById("rememberToggle");
+
+    const volumeSlider = document.getElementById("volumeSlider");
+    const volLabel = document.getElementById("volLabel");
+    const waveformSelect = document.getElementById("waveform");
+    const modFreqSlider = document.getElementById("modFreq");
+    const modFreqLabel = document.getElementById("modFreqLabel");
+    const modDepthSlider = document.getElementById("modDepth");
+    const modDepthLabel = document.getElementById("modDepthLabel");
+    const modeRadios = document.querySelectorAll("input[name='mode']");
+
+    const noiseEnabledCheckbox = document.getElementById("noiseEnabled");
+    const noiseTypeSelect = document.getElementById("noiseType");
+    const noiseLevelSlider = document.getElementById("noiseLevel");
+    const noiseLevelLabel = document.getElementById("noiseLevelLabel");
+    const noiseLowCutSlider = document.getElementById("noiseLowCut");
+    const noiseLowCutLabel = document.getElementById("noiseLowCutLabel");
+    const noiseHighCutSlider = document.getElementById("noiseHighCut");
+    const noiseHighCutLabel = document.getElementById("noiseHighCutLabel");
+
+    const brightnessSlider = document.getElementById("brightnessSlider");
+    const brightnessLabel = document.getElementById("brightnessLabel");
+    const contrastSlider = document.getElementById("contrastSlider");
+    const contrastLabel = document.getElementById("contrastLabel");
+    const glowSlider = document.getElementById("glowSlider");
+    const glowLabel = document.getElementById("glowLabel");
+    const themeChipsContainer = document.getElementById("themeChips");
+    const shadeSelect = document.getElementById("shadeSelect");
+
+    // Initial labels
+    modFreqLabel.textContent = modFreqSlider.value + " Hz";
+    modDepthLabel.textContent = modDepthSlider.value;
+    noiseLevelLabel.textContent = noiseLevelSlider.value + "%";
+    noiseLowCutLabel.textContent = noiseLowCutSlider.value + " Hz";
+    noiseHighCutLabel.textContent = noiseHighCutSlider.value + " Hz";
+    brightnessLabel.textContent = brightnessSlider.value + "%";
+    contrastLabel.textContent = contrastSlider.value + "%";
+    glowLabel.textContent = glowSlider.value + "%";
+
+    // ---------- Theme presets ----------
+    const themePresets = {
+        blue: {
+            light:  { bg1:"#edf3ff", bg2:"#dce7ff", accent:"#5f7bff" },
+            medium: { bg1:"#e6f0ff", bg2:"#d6e3ff", accent:"#5f7bff" },
+            dark:   { bg1:"#ced7f7", bg2:"#b8c5f0", accent:"#4c63df" }
+        },
+        mint: {
+            light:  { bg1:"#e7f8f2", bg2:"#d2f0e4", accent:"#46c7a4" },
+            medium: { bg1:"#def5ee", bg2:"#c8ecdf", accent:"#3fb999" },
+            dark:   { bg1:"#c4e5d8", bg2:"#add7c9", accent:"#329a80" }
+        },
+        lavender: {
+            light:  { bg1:"#f1ecff", bg2:"#e3dbff", accent:"#9a7dff" },
+            medium: { bg1:"#ebe4ff", bg2:"#ddd3ff", accent:"#8f72f3" },
+            dark:   { bg1:"#d7ccfa", bg2:"#c1b3f0", accent:"#795ad7" }
+        },
+        peach: {
+            light:  { bg1:"#ffece3", bg2:"#ffd8c7", accent:"#ff8a5c" },
+            medium: { bg1:"#ffe3d6", bg2:"#ffd0bf", accent:"#ff7a4b" },
+            dark:   { bg1:"#f7c8b1", bg2:"#f2b39a", accent:"#e86437" }
+        },
+        slate: {
+            light:  { bg1:"#e3edf5", bg2:"#d0dde9", accent:"#4b6b9b" },
+            medium: { bg1:"#dde7f2", bg2:"#c5d3e3", accent:"#425c87" },
+            dark:   { bg1:"#c5d0dd", bg2:"#afbccc", accent:"#364b70" }
+        }
+    };
+
+    let currentThemeColor = "blue";
+    let currentThemeShade = "medium";
+
+    function applyTheme(color, shade) {
+        const preset = themePresets[color][shade];
+        const root = document.documentElement;
+        root.style.setProperty("--bg1", preset.bg1);
+        root.style.setProperty("--bg2", preset.bg2);
+        root.style.setProperty("--accent", preset.accent);
+        root.style.setProperty("--accent-soft", preset.accent + "40");
+
+        currentThemeColor = color;
+        currentThemeShade = shade;
+
+        document.querySelectorAll(".theme-chip").forEach(chip => {
+            const c = chip.getAttribute("data-color");
+            chip.classList.toggle("active", c === color);
+        });
+
+        if (rememberToggle.checked) {
+            setCookie("focus_theme_color", color, 365);
+            setCookie("focus_theme_shade", shade, 365);
+        }
+    }
+
+    // ---------- Volume curve ----------
+    function sliderToGain(value) {
+        const x = value / 100;
+        const min = 0.0001;
+        return min * Math.pow(1 / min, x);
+    }
+
+    function applyNoiseColorSettings() {
+        if (!noiseColorFilter) return;
+        const type = noiseTypeSelect.value;
+        if (type === "white") {
+            noiseColorFilter.type = "allpass";
+            noiseColorFilter.frequency.value = 1000;
+            noiseColorFilter.Q.value = 1;
+        } else if (type === "pink") {
+            noiseColorFilter.type = "lowpass";
+            noiseColorFilter.frequency.value = 2000;
+            noiseColorFilter.Q.value = 0.7;
+        } else if (type === "brown") {
+            noiseColorFilter.type = "lowpass";
+            noiseColorFilter.frequency.value = 500;
+            noiseColorFilter.Q.value = 0.7;
+        }
+    }
+
+    function applyNoiseEQSettings() {
+        if (noiseHPFilter) {
+            noiseHPFilter.type = "highpass";
+            noiseHPFilter.frequency.value = parseFloat(noiseLowCutSlider.value);
+            noiseHPFilter.Q.value = 0.707;
+        }
+        if (noiseLPFilter) {
+            noiseLPFilter.type = "lowpass";
+            noiseLPFilter.frequency.value = parseFloat(noiseHighCutSlider.value);
+            noiseLPFilter.Q.value = 0.707;
+        }
+    }
+
+    function startAudio() {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = sliderToGain(volumeSlider.value);
+        masterGain.connect(audioCtx.destination);
+
+        const mode = document.querySelector("input[name='mode']:checked").value;
+        const numVoices = mode === "poly" ? 3 : 1;
+        const baseFreq = 582;
+        const waveform = waveformSelect.value;
+        const modFreq = parseFloat(modFreqSlider.value);
+        const modDepth = parseFloat(modDepthSlider.value);
+
+        voices = [];
+
+        for (let i = 0; i < numVoices; i++) {
+            const carrier = audioCtx.createOscillator();
+            carrier.type = waveform;
+
+            let detune = 0;
+            if (mode === "poly") {
+                if (i === 1) detune = -4;
+                if (i === 2) detune = +4;
+            }
+            carrier.frequency.value = baseFreq + detune;
+
+            const modOsc = audioCtx.createOscillator();
+            modOsc.type = "sine";
+            modOsc.frequency.value = modFreq;
+
+            const modGain = audioCtx.createGain();
+            modGain.gain.value = modDepth;
+
+            modOsc.connect(modGain);
+            modGain.connect(carrier.frequency);
+
+            carrier.connect(masterGain);
+
+            carrier.start();
+            modOsc.start();
+
+            voices.push({ carrier, modOsc, modGain });
+        }
+
+        const bufferSize = audioCtx.sampleRate * 2;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+
+        noiseSource = audioCtx.createBufferSource();
+        noiseSource.buffer = buffer;
+        noiseSource.loop = true;
+
+        noiseColorFilter = audioCtx.createBiquadFilter();
+        noiseHPFilter = audioCtx.createBiquadFilter();
+        noiseLPFilter = audioCtx.createBiquadFilter();
+        noiseGain = audioCtx.createGain();
+
+        applyNoiseColorSettings();
+        applyNoiseEQSettings();
+
+        const initialNoiseGain = noiseEnabledCheckbox.checked
+            ? sliderToGain(noiseLevelSlider.value) * 0.6
+            : 0.0;
+        noiseGain.gain.value = initialNoiseGain;
+
+        noiseSource.connect(noiseColorFilter);
+        noiseColorFilter.connect(noiseHPFilter);
+        noiseHPFilter.connect(noiseLPFilter);
+        noiseLPFilter.connect(noiseGain);
+        noiseGain.connect(masterGain);
+
+        noiseSource.start();
+
+        playing = true;
+        btn.textContent = "Stop";
+    }
+
+    function stopAudio() {
+        voices.forEach(v => {
+            try { v.carrier.stop(); } catch(e) {}
+            try { v.modOsc.stop(); } catch(e) {}
+            v.carrier.disconnect();
+            v.modOsc.disconnect();
+            v.modGain.disconnect();
+        });
+        voices = [];
+
+        if (noiseSource) {
+            try { noiseSource.stop(); } catch(e) {}
+            noiseSource.disconnect();
+            noiseSource = null;
+        }
+        if (noiseColorFilter) {
+            noiseColorFilter.disconnect();
+            noiseColorFilter = null;
+        }
+        if (noiseHPFilter) {
+            noiseHPFilter.disconnect();
+            noiseHPFilter = null;
+        }
+        if (noiseLPFilter) {
+            noiseLPFilter.disconnect();
+            noiseLPFilter = null;
+        }
+        if (noiseGain) {
+            noiseGain.disconnect();
+            noiseGain = null;
+        }
+
+        if (masterGain) {
+            masterGain.disconnect();
+            masterGain = null;
+        }
+        if (audioCtx) {
+            audioCtx.close();
+            audioCtx = null;
+        }
+
+        playing = false;
+        btn.textContent = "Start";
+    }
+
+    // ---------- Event wiring ----------
+    btn.addEventListener("click", () => {
+        if (!playing) startAudio(); else stopAudio();
+    });
+
+    volumeSlider.addEventListener("input", () => {
+        volLabel.textContent = volumeSlider.value + "%";
+        if (masterGain) masterGain.gain.value = sliderToGain(volumeSlider.value);
+    });
+
+    waveformSelect.addEventListener("change", () => {
+        if (!playing) return;
+        const waveform = waveformSelect.value;
+        voices.forEach(v => v.carrier.type = waveform);
+    });
+
+    modeRadios.forEach(radio => {
+        radio.addEventListener("change", () => {
+            if (playing) {
+                stopAudio();
+                startAudio();
+            }
+        });
+    });
+
+    modFreqSlider.addEventListener("input", () => {
+        const val = parseFloat(modFreqSlider.value);
+        modFreqLabel.textContent = val + " Hz";
+        if (!playing) return;
+        voices.forEach(v => v.modOsc.frequency.value = val);
+    });
+
+    modDepthSlider.addEventListener("input", () => {
+        const val = parseFloat(modDepthSlider.value);
+        modDepthLabel.textContent = val;
+        if (!playing) return;
+        voices.forEach(v => v.modGain.gain.value = val);
+    });
+
+    noiseEnabledCheckbox.addEventListener("change", () => {
+        if (!playing || !noiseGain) return;
+        if (noiseEnabledCheckbox.checked) {
+            noiseGain.gain.value = sliderToGain(noiseLevelSlider.value) * 1.25;
+        } else {
+            noiseGain.gain.value = 0;
+        }
+    });
+
+    noiseTypeSelect.addEventListener("change", () => {
+        if (!playing) return;
+        applyNoiseColorSettings();
+    });
+
+    noiseLevelSlider.addEventListener("input", () => {
+        noiseLevelLabel.textContent = noiseLevelSlider.value + "%";
+        if (!playing || !noiseGain) return;
+        if (noiseEnabledCheckbox.checked) {
+            noiseGain.gain.value = sliderToGain(noiseLevelSlider.value) * 1.25;
+        }
+    });
+
+    noiseLowCutSlider.addEventListener("input", () => {
+        noiseLowCutLabel.textContent = noiseLowCutSlider.value + " Hz";
+        if (!playing) return;
+        applyNoiseEQSettings();
+    });
+
+    noiseHighCutSlider.addEventListener("input", () => {
+        noiseHighCutLabel.textContent = noiseHighCutSlider.value + " Hz";
+        if (!playing) return;
+        applyNoiseEQSettings();
+    });
+
+    // Display controls
+    brightnessSlider.addEventListener("input", () => {
+        const val = parseInt(brightnessSlider.value, 10);
+        brightnessLabel.textContent = val + "%";
+        document.documentElement.style.setProperty("--brightness", (val / 100).toString());
+        if (rememberToggle.checked) setCookie("focus_brightness", val, 365);
+    });
+
+    contrastSlider.addEventListener("input", () => {
+        const val = parseInt(contrastSlider.value, 10);
+        contrastLabel.textContent = val + "%";
+        document.documentElement.style.setProperty("--contrast", (val / 100).toString());
+        if (rememberToggle.checked) setCookie("focus_contrast", val, 365);
+    });
+
+    glowSlider.addEventListener("input", () => {
+        const val = parseInt(glowSlider.value, 10);
+        glowLabel.textContent = val + "%";
+        document.documentElement.style.setProperty("--glow-strength", (val / 100).toString());
+        if (rememberToggle.checked) setCookie("focus_glow", val, 365);
+    });
+
+    themeChipsContainer.addEventListener("click", (e) => {
+        const chip = e.target.closest(".theme-chip");
+        if (!chip) return;
+        const color = chip.getAttribute("data-color");
+        const shade = shadeSelect.value;
+        applyTheme(color, shade);
+        if (rememberToggle.checked) {
+            setCookie("focus_theme_color", color, 365);
+            setCookie("focus_theme_shade", shade, 365);
+        }
+    });
+
+    shadeSelect.addEventListener("change", () => {
+        applyTheme(currentThemeColor, shadeSelect.value);
+        if (rememberToggle.checked) {
+            setCookie("focus_theme_shade", shadeSelect.value, 365);
+        }
+    });
+
+    backgroundToggle.addEventListener("change", () => {
+        if (rememberToggle.checked) {
+            setCookie("focus_background", backgroundToggle.checked ? "1" : "0", 365);
+        }
+    });
+
+    // visibility: optional pause if user doesn't want background playback
+    let wasPlayingBeforeHide = false;
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") {
+            wasPlayingBeforeHide = playing;
+            if (!backgroundToggle.checked && playing) {
+                stopAudio();
+            }
+        } else if (document.visibilityState === "visible") {
+            if (audioCtx && audioCtx.state === "suspended") {
+                audioCtx.resume();
+            }
+        }
+    });
+
+    // ---------- Restore from cookies ----------
+    (function restoreSettingsFromCookies() {
+        const cColor = getCookie("focus_theme_color");
+        const cShade = getCookie("focus_theme_shade");
+        const cBright = getCookie("focus_brightness");
+        const cContrast = getCookie("focus_contrast");
+        const cGlow = getCookie("focus_glow");
+        const cBackground = getCookie("focus_background");
+
+        if (cColor && themePresets[cColor]) currentThemeColor = cColor;
+        if (cShade && themePresets[currentThemeColor][cShade]) currentThemeShade = cShade;
+
+        shadeSelect.value = currentThemeShade;
+        applyTheme(currentThemeColor, currentThemeShade);
+
+        if (cBright) {
+            brightnessSlider.value = cBright;
+            brightnessLabel.textContent = cBright + "%";
+            document.documentElement.style.setProperty("--brightness", (cBright / 100).toString());
+        }
+        if (cContrast) {
+            contrastSlider.value = cContrast;
+            contrastLabel.textContent = cContrast + "%";
+            document.documentElement.style.setProperty("--contrast", (cContrast / 100).toString());
+        }
+        if (cGlow) {
+            glowSlider.value = cGlow;
+            glowLabel.textContent = cGlow + "%";
+            document.documentElement.style.setProperty("--glow-strength", (cGlow / 100).toString());
+        }
+        if (cBackground !== null) {
+            backgroundToggle.checked = cBackground === "1";
+        }
+    })();
+</script>
+
+</body>
+</html>
