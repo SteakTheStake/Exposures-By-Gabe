@@ -336,6 +336,13 @@
             <div class="panel-title">Tone & FM</div>
 
             <div class="row">
+                <label>
+                    <input type="checkbox" id="toneEnabled" checked>
+                    Enable tone
+                </label>
+            </div>
+
+            <div class="row">
                 <label for="volumeSlider">Master Volume: <span id="volLabel">70%</span></label>
                 <input type="range" id="volumeSlider" min="0" max="100" value="70">
             </div>
@@ -505,6 +512,7 @@
     const backgroundToggle = document.getElementById("backgroundToggle");
     const rememberToggle = document.getElementById("rememberToggle");
 
+    const toneEnabledCheckbox = document.getElementById("toneEnabled");
     const volumeSlider = document.getElementById("volumeSlider");
     const volLabel = document.getElementById("volLabel");
     const toneLevelSlider = document.getElementById("toneLevelSlider");
@@ -636,14 +644,24 @@
         }
     }
 
-    function startAudio() {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        masterGain = audioCtx.createGain();
-        masterGain.gain.value = sliderToGain(volumeSlider.value);
-        masterGain.connect(audioCtx.destination);
-        toneGain = audioCtx.createGain();
-        toneGain.gain.value = sliderToGain(toneLevelSlider.value);
-        toneGain.connect(masterGain);
+    function clearToneVoices() {
+        voices.forEach(v => {
+            try { v.carrier.stop(); } catch(e) {}
+            try { v.modOsc.stop(); } catch(e) {}
+            v.carrier.disconnect();
+            v.modOsc.disconnect();
+            v.modGain.disconnect();
+        });
+        voices = [];
+    }
+
+    function buildToneVoices() {
+        if (!audioCtx || !toneGain || !toneEnabledCheckbox.checked) {
+            clearToneVoices();
+            return;
+        }
+
+        clearToneVoices();
 
         const mode = document.querySelector("input[name='mode']:checked").value;
         const numVoices = mode === "poly" ? 3 : 1;
@@ -651,8 +669,6 @@
         const waveform = waveformSelect.value;
         const modFreq = parseFloat(modFreqSlider.value);
         const modDepth = parseFloat(modDepthSlider.value);
-
-        voices = [];
 
         for (let i = 0; i < numVoices; i++) {
             const carrier = audioCtx.createOscillator();
@@ -676,13 +692,27 @@
             modGain.connect(carrier.frequency);
 
             carrier.connect(toneGain);
-            carrier.connect(masterGain);
 
             carrier.start();
             modOsc.start();
 
             voices.push({ carrier, modOsc, modGain });
         }
+    }
+
+    function startAudio() {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = sliderToGain(volumeSlider.value);
+        masterGain.connect(audioCtx.destination);
+        toneGain = audioCtx.createGain();
+        const initialToneGain = toneEnabledCheckbox.checked
+            ? sliderToGain(toneLevelSlider.value)
+            : 0;
+        toneGain.gain.value = initialToneGain;
+        toneGain.connect(masterGain);
+
+        buildToneVoices();
 
         const bufferSize = audioCtx.sampleRate * 2;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
@@ -721,14 +751,7 @@
     }
 
     function stopAudio() {
-        voices.forEach(v => {
-            try { v.carrier.stop(); } catch(e) {}
-            try { v.modOsc.stop(); } catch(e) {}
-            v.carrier.disconnect();
-            v.modOsc.disconnect();
-            v.modGain.disconnect();
-        });
-        voices = [];
+        clearToneVoices();
 
         if (noiseSource) {
             try { noiseSource.stop(); } catch(e) {}
@@ -782,7 +805,24 @@
 
     toneLevelSlider.addEventListener("input", () => {
         toneLevelLabel.textContent = toneLevelSlider.value + "%";
-        if (toneGain) toneGain.gain.value = sliderToGain(toneLevelSlider.value);
+        if (toneGain) {
+            toneGain.gain.value = toneEnabledCheckbox.checked
+                ? sliderToGain(toneLevelSlider.value)
+                : 0;
+        }
+    });
+
+    toneEnabledCheckbox.addEventListener("change", () => {
+        const enabled = toneEnabledCheckbox.checked;
+        if (toneGain) {
+            toneGain.gain.value = enabled ? sliderToGain(toneLevelSlider.value) : 0;
+        }
+        if (!playing) return;
+        if (enabled) {
+            buildToneVoices();
+        } else {
+            clearToneVoices();
+        }
     });
 
     waveformSelect.addEventListener("change", () => {
