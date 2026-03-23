@@ -37,6 +37,13 @@ class GalleryManager {
         this.init();
     }
 
+    async init() {
+        await this.loadCsvTagMap();
+        await this.loadImagesFromRepository();
+        this.renderGallery();
+        this.setupFilters();
+    }
+
     // === NEW: small CSV parser (lenient) ===
     // Handles plain CSV with optional quotes; not a full RFC parser, but good for tag lists.
     parseCSV(text) {
@@ -103,7 +110,7 @@ class GalleryManager {
         const config = this.getGithubConfig();
         // allow absolute or relative CSV path within repo
         const normalized = this.csvConfig.path.replace(/^\/+/, '');
-        const csvRawUrl = `https://raw.githubusercontent.com/${config.username}/${config.repository}/refs/heads/${config.branch}/${normalized}`;
+        const csvRawUrl = this.buildGithubRawUrl(normalized);
 
         try {
             const resp = await fetch(csvRawUrl, { cache: 'no-store' });
@@ -157,6 +164,88 @@ class GalleryManager {
         };
     }
 
+    buildGithubRawUrl(path) {
+        const config = this.getGithubConfig();
+        const normalizedPath = (path || '').replace(/^\/+/, '');
+        return `https://raw.githubusercontent.com/${config.username}/${config.repository}/${encodeURIComponent(config.branch)}/${normalizedPath}`;
+    }
+
+    buildLocalImageUrl(filename) {
+        const config = this.getGithubConfig();
+        return `${config.folder}/${encodeURIComponent(filename)}`;
+    }
+
+    getOfflineFilenameCacheKey() {
+        return 'gallery-cached-filenames';
+    }
+
+    cacheImageFilenames(filenames) {
+        if (!Array.isArray(filenames) || !filenames.length) return;
+        try {
+            localStorage.setItem(this.getOfflineFilenameCacheKey(), JSON.stringify(filenames));
+        } catch (error) {
+            console.warn('Unable to cache gallery filenames for offline use:', error);
+        }
+    }
+
+    getOfflineFallbackFilenames() {
+        const fallbackSet = new Set();
+
+        try {
+            const cached = JSON.parse(localStorage.getItem(this.getOfflineFilenameCacheKey()) || '[]');
+            if (Array.isArray(cached)) {
+                cached.forEach(name => {
+                    if (typeof name === 'string' && name.trim()) {
+                        fallbackSet.add(name.trim());
+                    }
+                });
+            }
+        } catch (error) {
+            console.warn('Unable to read cached gallery filenames:', error);
+        }
+
+        Object.keys(this.imageMetadata || {}).forEach(name => {
+            if (typeof name === 'string' && name.trim()) {
+                fallbackSet.add(name.trim());
+            }
+        });
+
+        return Array.from(fallbackSet);
+    }
+
+    finalizeDetectedImages(detectedImages) {
+        return detectedImages.map(img => {
+            const meta = this.imageMetadata[img.filename] || {};
+
+            // Determine tags: prefer CSV (already applied as defaultTags), then metadata.tags, fallback to defaultTags
+            const baseTags = this.normalizeTags(meta.tags && meta.tags.length ? meta.tags : img.defaultTags);
+
+            // Category: prefer metadata; else optionally derive from first tag
+            const preferredCategoryCandidate = meta.categoryValue || meta.category;
+            const csvFirstTag = (this.csvConfig.deriveCategoryFromFirstTag && baseTags.length) ? baseTags[0] : null;
+
+            const categoryDetails = this.resolveCategory(
+                meta.category || img.category,            // label candidate
+                preferredCategoryCandidate || csvFirstTag, // value candidate
+                csvFirstTag                                // fallback: first tag from CSV
+            );
+
+            const tags = this.ensureCategoryTag(baseTags, categoryDetails.value);
+
+            return {
+                id: img.filename,
+                filename: img.filename,
+                url: img.url,
+                alt: img.alt,
+                title: meta.title || img.title,
+                tags,
+                category: categoryDetails.label,
+                categoryValue: categoryDetails.value,
+                captureDate: img.captureDate
+            };
+        });
+    }
+
     lookupCsvTagsForFilename(filename) {
         if (!filename) return null;
         const lower = filename.toLowerCase();
@@ -178,6 +267,7 @@ class GalleryManager {
 
     async loadImagesFromRepository() {
         const githubConfig = this.getGithubConfig();
+        const imageExtensions = ['jpg','jpeg','png','gif','webp','bmp','tiff','tif'];
 
         try {
             const apiUrl = `https://api.github.com/repos/${githubConfig.username}/${githubConfig.repository}/contents/${githubConfig.folder}`;
@@ -188,14 +278,12 @@ class GalleryManager {
             const detectedImages = [];
             let imageCounter = 1;
 
-            const imageExtensions = ['jpg','jpeg','png','gif','webp','bmp','tiff','tif'];
-
             for (const item of contents) {
                 if (item.type !== 'file') continue;
                 const extension = item.name.toLowerCase().split('.').pop();
                 if (!imageExtensions.includes(extension)) continue;
 
-                const githubRawUrl = `https://raw.githubusercontent.com/${githubConfig.username}/${githubConfig.repository}/refs/heads/${githubConfig.branch}/${githubConfig.folder}/${item.name}`;
+                const githubRawUrl = this.buildGithubRawUrl(`${githubConfig.folder}/${item.name}`);
 
                 try {
                     const imageData = await this.loadImageWithMetadata(githubRawUrl, item.name, imageCounter);
@@ -213,40 +301,42 @@ class GalleryManager {
                 }
             }
 
-            // Merge with stored metadata & finalize
-            this.images = detectedImages.map(img => {
-                const meta = this.imageMetadata[img.filename] || {};
-
-                // Determine tags: prefer CSV (already applied as defaultTags), then metadata.tags, fallback to defaultTags
-                const baseTags = this.normalizeTags(meta.tags && meta.tags.length ? meta.tags : img.defaultTags);
-
-                // Category: prefer metadata; else optionally derive from first tag
-                const preferredCategoryCandidate = meta.categoryValue || meta.category;
-                const csvFirstTag = (this.csvConfig.deriveCategoryFromFirstTag && baseTags.length) ? baseTags[0] : null;
-
-                const categoryDetails = this.resolveCategory(
-                    meta.category || img.category,            // label candidate
-                    preferredCategoryCandidate || csvFirstTag, // value candidate
-                    csvFirstTag                                // fallback: first tag from CSV
-                );
-
-                const tags = this.ensureCategoryTag(baseTags, categoryDetails.value);
-
-                return {
-                    id: img.filename,
-                    filename: img.filename,
-                    url: img.url,
-                    alt: img.alt,
-                    title: meta.title || img.title,
-                    tags,
-                    category: categoryDetails.label,
-                    categoryValue: categoryDetails.value,
-                    captureDate: img.captureDate
-                };
-            });
+            this.cacheImageFilenames(detectedImages.map(img => img.filename));
+            this.images = this.finalizeDetectedImages(detectedImages);
         } catch (error) {
             console.error('Error loading images from repository:', error);
-            this.images = [];
+
+            const fallbackFilenames = this.getOfflineFallbackFilenames().filter(name => {
+                const extension = name.toLowerCase().split('.').pop();
+                return imageExtensions.includes(extension);
+            });
+
+            if (fallbackFilenames.length) {
+                console.warn('Using local /Img fallback while repository is unreachable.');
+                const detectedImages = [];
+                let imageCounter = 1;
+
+                for (const filename of fallbackFilenames) {
+                    try {
+                        const localImageUrl = this.buildLocalImageUrl(filename);
+                        const imageData = await this.loadImageWithMetadata(localImageUrl, filename, imageCounter);
+
+                        const csvTags = this.lookupCsvTagsForFilename(filename);
+                        if (csvTags && csvTags.length) {
+                            imageData.defaultTags = csvTags;
+                        }
+
+                        detectedImages.push(imageData);
+                        imageCounter++;
+                    } catch (_) {
+                        console.log(`Could not load fallback image: ${filename}`);
+                    }
+                }
+
+                this.images = this.finalizeDetectedImages(detectedImages);
+            } else {
+                this.images = [];
+            }
         } finally {
             this.notifyGalleryUpdated();
         }
@@ -264,7 +354,7 @@ class GalleryManager {
     // Generate GitHub raw URL for any filename
     generateGithubRawUrl(filename) {
         const config = this.getGithubConfig();
-        return `https://raw.githubusercontent.com/${config.username}/${config.repository}/refs/heads/${config.branch}/${config.folder}/${filename}`;
+        return this.buildGithubRawUrl(`${config.folder}/${filename}`);
     }
 
     getCategoryOptions() {
